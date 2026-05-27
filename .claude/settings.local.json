@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(Get-ChildItem -Recurse -Depth 2 \"C:\\\\Users\\\\bryan\\\\OneDrive\\\\Downloads\\\\Plagiocephalytool\\\\files\")",
+      "Bash(Select-Object FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(git add *)"
+    ]
+  }
+}
