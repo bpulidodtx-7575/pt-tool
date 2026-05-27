@@ -1,13 +1,14 @@
-// CHOA Plagiocephaly Assessment Tool — Clinical Reference
+// CHOA Plagiocephaly Assessment Tool — Therapedia Edition
 // CVAI formula: |A−B| / max(A,B) × 100  (official CHOA formula)
 // No patient data stored or transmitted. Reference tool only.
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
+// Therapedia fonts: Bitter (display) + Nunito Sans (body) + JetBrains Mono (numbers)
 if (typeof document !== "undefined") {
   [
     { rel:"preconnect", href:"https://fonts.googleapis.com" },
     { rel:"preconnect", href:"https://fonts.gstatic.com", crossOrigin:"anonymous" },
-    { rel:"stylesheet", href:"https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" },
+    { rel:"stylesheet", href:"https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,600;0,700;1,600;1,700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700&family=JetBrains+Mono:wght@400;500;600&display=swap" },
   ].forEach(({ rel, href, crossOrigin }) => {
     if (document.querySelector(`link[href="${href}"]`)) return;
     const el = document.createElement("link");
@@ -17,259 +18,383 @@ if (typeof document !== "undefined") {
   });
 }
 
+// ─── Therapedia Design System tokens ─────────────────────────────────────────
+// Palette sampled directly from the Therapedia logo:
+//   Thera blue   #0070BD — PT service color (this tool's primary)
+//   Pedia orange #F08218 — CTA / action color
+//   Red dot      #E11E15 — wordmark dot / emphasis
+//   Cream bg     #FBF7F0 — warm off-white page
 const GLOBAL_CSS = `
+  /* ── Therapedia Design System tokens ──────────────────────────────────── */
   :root {
-    --font-sans:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;
-    --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
-    --bg:#f9fafb; --surface:#ffffff; --surface-2:#f3f4f6; --surface-3:#e9eaec;
-    --border:#dde0e6; --border-soft:#e8eaef;
-    --ink:#1e2330; --ink-2:#414758; --ink-3:#666e85; --ink-4:#959daf;
-    --accent-h:35;
-    --accent:#d97757; --accent-soft:#fef3f0; --accent-strong:#c86245; --accent-ink:#8b3b2e;
-    --sev-1:#2e8a50; --sev-2:#8a7200; --sev-3:#a06200; --sev-4:#c04020; --sev-5:#a02010;
-    --shadow-card:0 1px 2px rgba(15,23,42,.04),0 4px 16px rgba(15,23,42,.04);
-    --shadow-pop:0 4px 8px rgba(15,23,42,.06),0 16px 32px rgba(15,23,42,.08);
-    --focus:0 0 0 3px rgba(217,119,87,.35);
-    --r-sm:6px; --r-md:10px; --r-lg:14px; --r-pill:999px;
-    --pad-card:28px; --gap-stack:20px;
+    /* Brand */
+    --brand-blue:        #0070BD;
+    --brand-blue-deep:   #00538C;
+    --brand-blue-soft:   #D6EAF6;
+    --brand-orange:      #F08218;
+    --brand-orange-deep: #C7670C;
+    --brand-orange-soft: #FCE6D0;
+    --brand-red:         #E11E15;
+    --brand-red-deep:    #B0140E;
+    --brand-red-soft:    #FBD9D7;
+
+    /* Fonts */
+    --font-display: "Bookman Old Style","Bookman","Bitter",Georgia,"Times New Roman",serif;
+    --font-sans:    "Nunito Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --font-mono:    "JetBrains Mono",ui-monospace,Menlo,monospace;
+
+    /* Neutrals (warm-cool blend) */
+    --ink-900: #0E1B2B;
+    --ink-700: #1F2F40;
+    --ink-500: #4A5A6B;
+    --ink-300: #8E9AA5;
+    --ink-200: #C3CCD3;
+    --ink-100: #E3E8EC;
+
+    /* Page surfaces */
+    --bg:        #FBF7F0;   /* cream — Therapedia default */
+    --surface:   #FFFFFF;   /* paper */
+    --surface-2: #F5EFE4;   /* warm tint */
+    --surface-3: #EDE4D4;
+
+    /* Semantic */
+    --border:      var(--ink-200);
+    --border-soft: var(--ink-100);
+    --ink:   var(--ink-900);
+    --ink-2: var(--ink-700);
+    --ink-3: var(--ink-500);
+    --ink-4: var(--ink-300);
+
+    /* Accent = PT service blue (Physical Therapy — the discipline for plagiocephaly) */
+    --accent:       var(--brand-blue);
+    --accent-soft:  var(--brand-blue-soft);
+    --accent-strong:var(--brand-blue-deep);
+    --accent-ink:   #003A70;
+
+    /* CTA = Therapedia orange */
+    --cta:          var(--brand-orange);
+    --cta-soft:     var(--brand-orange-soft);
+    --cta-strong:   var(--brand-orange-deep);
+
+    /* Clinical severity colors (medical reference — not brand) */
+    --sev-1: #2E9D5B;
+    --sev-2: #8a7200;
+    --sev-3: #C7670C;
+    --sev-4: #c04020;
+    --sev-5: #B0140E;
+
+    /* Shadows (warm-neutral per Therapedia system) */
+    --shadow-card: 0 4px 12px rgba(14,27,43,.07), 0 2px 4px rgba(14,27,43,.04);
+    --shadow-pop:  0 12px 28px rgba(14,27,43,.10), 0 4px 8px rgba(14,27,43,.05);
+
+    /* Focus — 3px blue ring (WCAG AAA, clinical-first) */
+    --focus: 0 0 0 3px rgba(0,112,189,.25), 0 0 0 1.5px rgba(0,112,189,.6);
+
+    /* Radii */
+    --r-xs:  4px;
+    --r-sm:  8px;
+    --r-md:  12px;
+    --r-lg:  20px;
+    --r-pill:999px;
+
+    /* Card padding + gap */
+    --pad-card:  28px;
+    --gap-stack: 20px;
   }
+
+  /* ── Dark mode — unofficial Therapedia dark ──────────────────────────── */
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg:#111318; --surface:#1a1d24; --surface-2:#20242d; --surface-3:#272c37;
-      --border:#333846; --border-soft:#2b3040;
-      --ink:#f0f1f5; --ink-2:#c8ccd6; --ink-3:#8e95a8; --ink-4:#5a6070;
-      --accent:#e89979; --accent-soft:#3d2420; --accent-strong:#f5a792; --accent-ink:#ffb9a1;
-      --sev-1:#5ecc80; --sev-2:#d4b800; --sev-3:#d08000; --sev-4:#e06040; --sev-5:#d04030;
-      --shadow-card:0 1px 3px rgba(0,0,0,.4),0 4px 20px rgba(0,0,0,.3);
-      --focus:0 0 0 3px rgba(232,153,121,.45);
+      --bg:        #080F1A;
+      --surface:   #0C1625;
+      --surface-2: #11203A;
+      --surface-3: #172A4A;
+      --border:      #1E3050;
+      --border-soft: #162540;
+      --ink:   #EBF0F5;
+      --ink-2: #C8D4DD;
+      --ink-3: #7A8F9E;
+      --ink-4: #4A5E6E;
+      --accent:       #3EA7E8;
+      --accent-soft:  #0A2540;
+      --accent-strong:#61BCE8;
+      --accent-ink:   #A8D8F5;
+      --cta:          #F08218;
+      --cta-soft:     #3A1E00;
+      --cta-strong:   #FFB460;
+      --sev-1: #5ecc80; --sev-2: #d4b800;
+      --sev-3: #E08820; --sev-4: #e06040; --sev-5: #d04030;
+      --shadow-card: 0 4px 12px rgba(0,0,0,.40), 0 2px 4px rgba(0,0,0,.30);
+      --shadow-pop:  0 12px 28px rgba(0,0,0,.55), 0 4px 8px rgba(0,0,0,.35);
+      --focus: 0 0 0 3px rgba(62,167,232,.30), 0 0 0 1.5px rgba(62,167,232,.55);
     }
   }
 
-  @supports (color: oklch(0 0 0)) {
-    :root {
-      --bg:oklch(98.5% 0.003 230); --surface:oklch(100% 0 0);
-      --surface-2:oklch(97% 0.004 230); --surface-3:oklch(94.5% 0.005 230);
-      --border:oklch(92% 0.005 230); --border-soft:oklch(95% 0.004 230);
-      --ink:oklch(22% 0.012 250); --ink-2:oklch(42% 0.012 250);
-      --ink-3:oklch(58% 0.010 250); --ink-4:oklch(72% 0.008 250);
-      --accent:oklch(60% 0.16 var(--accent-h)); --accent-soft:oklch(96% 0.03 var(--accent-h));
-      --accent-strong:oklch(50% 0.17 var(--accent-h)); --accent-ink:oklch(32% 0.12 var(--accent-h));
-      --sev-1:oklch(62% 0.13 155); --sev-2:oklch(70% 0.13 95); --sev-3:oklch(70% 0.14 65);
-      --sev-4:oklch(63% 0.16 35);  --sev-5:oklch(55% 0.18 22);
-      --focus:0 0 0 3px color-mix(in oklab,var(--accent) 35%,transparent);
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg:oklch(14% 0.006 250); --surface:oklch(18% 0.007 250);
-        --surface-2:oklch(22% 0.007 250); --surface-3:oklch(26% 0.008 250);
-        --border:oklch(32% 0.008 250); --border-soft:oklch(28% 0.007 250);
-        --ink:oklch(96% 0.004 240); --ink-2:oklch(80% 0.006 240);
-        --ink-3:oklch(62% 0.007 240); --ink-4:oklch(46% 0.007 240);
-        --accent:oklch(68% 0.18 var(--accent-h)); --accent-soft:oklch(24% 0.05 var(--accent-h));
-        --accent-strong:oklch(74% 0.16 var(--accent-h)); --accent-ink:oklch(82% 0.12 var(--accent-h));
-        --sev-1:oklch(78% 0.15 155); --sev-2:oklch(84% 0.14 95);
-        --sev-3:oklch(82% 0.16 65);  --sev-4:oklch(76% 0.18 35);
-        --sev-5:oklch(72% 0.20 22);
-        --focus:0 0 0 3px color-mix(in oklab,var(--accent) 45%,transparent);
-      }
-    }
-  }
-
+  /* ── Resets ──────────────────────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
-    background: var(--bg); color: var(--ink);
-    font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
-    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
-    font-feature-settings: "ss01","cv11";
+    background: var(--bg);
+    color: var(--ink-2);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern","liga";
   }
-  h1, h2, h3 { letter-spacing: -0.015em; font-weight: 600; }
-  button { font-family: inherit; }
-  a { color: var(--accent-strong); text-decoration: none; font-weight: 500; }
-  a:hover { text-decoration: underline; }
-  a:focus-visible { outline: none; box-shadow: var(--focus); border-radius: 3px; }
-  ::selection { background: color-mix(in srgb, var(--accent) 25%, transparent); }
 
+  /* Headings use Bitter (Therapedia display face) */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  button { font-family: var(--font-sans); }
+  a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  a:hover { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+  a:focus-visible { outline: none; box-shadow: var(--focus); border-radius: 3px; }
+  ::selection { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+
+  /* ── Skip nav ────────────────────────────────────────────────────────── */
   .skip-nav {
     position: absolute; left: -9999px; top: 8px; z-index: 999;
     padding: 8px 14px; background: var(--ink); color: var(--bg);
-    border-radius: var(--r-sm); font-weight: 600; font-size: 13px;
+    border-radius: var(--r-sm); font-weight: 700; font-size: 13px;
   }
   .skip-nav:focus { left: 8px; outline: none; box-shadow: var(--focus); }
 
+  /* ── App bar ─────────────────────────────────────────────────────────── */
   .appbar {
     position: sticky; top: 0; z-index: 50;
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
     backdrop-filter: saturate(180%) blur(12px);
     -webkit-backdrop-filter: saturate(180%) blur(12px);
     border-bottom: 1px solid var(--border-soft);
+    transition: box-shadow 200ms;
   }
+  .appbar.is-scrolled { box-shadow: var(--shadow-card); }
   .appbar-inner {
-    max-width: 1400px; margin: 0 auto; padding: 14px 32px;
+    max-width: 1200px; margin: 0 auto; padding: 12px 32px;
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
   }
+
+  /* Therapedia wordmark treatment */
   .brand { display: flex; align-items: center; gap: 12px; }
-  .brand-mark {
-    width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
-    background: linear-gradient(140deg, var(--accent) 0%, var(--accent-strong) 100%);
-    display: grid; place-items: center; color: white;
+  .brand-logo {
+    height: 36px; width: auto; display: block;
+    flex-shrink: 0;
+  }
+  .brand-divider {
+    width: 1px; height: 28px; background: var(--border); flex-shrink: 0;
   }
   .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
-  .brand-name { font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
-  .brand-meta { font-size: 11.5px; color: var(--ink-3); font-weight: 500; }
+  .brand-name {
+    font-family: var(--font-display);
+    font-size: 15px; font-weight: 700;
+    color: var(--ink); letter-spacing: -.01em;
+    display: flex; align-items: baseline; gap: 0;
+  }
+  .brand-name .thera  { color: var(--brand-blue); }
+  .brand-name .pedia  { color: var(--brand-orange); font-style: italic; }
+  .brand-name .dot    { color: var(--brand-red); }
+  .brand-meta { font-size: 11px; color: var(--ink-3); font-weight: 600; text-transform: uppercase; letter-spacing: .07em; margin-top: 2px; }
+
   .status-pill {
-    display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
     border-radius: var(--r-pill); background: var(--surface-2);
-    font-size: 12px; color: var(--ink-2); font-weight: 500;
+    border: 1px solid var(--border-soft);
+    font-size: 11.5px; color: var(--ink-3); font-weight: 600;
   }
 
+  /* ── Main layout ─────────────────────────────────────────────────────── */
   main {
-    max-width: 1400px; margin: 0 auto; padding: 40px 32px 96px;
+    max-width: 1200px; margin: 0 auto; padding: 36px 32px 96px;
     display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr);
     gap: 32px; align-items: start;
   }
   @media (max-width: 960px) { main { grid-template-columns:1fr; padding:24px 20px 96px; gap:24px; } }
   .col-stack { display: flex; flex-direction: column; gap: var(--gap-stack); min-width: 0; }
 
+  /* ── Cards ───────────────────────────────────────────────────────────── */
   .card {
-    background: var(--surface); border: 1px solid var(--border-soft);
-    border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card);
   }
   .card-pad { padding: var(--pad-card); }
   .card-head {
     padding: 22px var(--pad-card) 16px;
     display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
   }
-  .card-title { font-size: 16px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
-  .card-meta   { font-size: 12px; color: var(--ink-3); font-weight: 500; font-family: var(--font-mono); }
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: -.01em;
+  }
+  .card-meta { font-size: 11.5px; color: var(--ink-3); font-weight: 600; font-family: var(--font-mono); }
   .card-head-flex {
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px; flex-wrap: wrap;
   }
   .eyebrow {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
-    font-weight: 600; color: var(--ink-3);
+    font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+    font-weight: 700; color: var(--ink-3);
   }
 
-  /* ── Segmented tab switcher ────────────────────────────────────────────── */
+  /* ── Segmented tab switcher ──────────────────────────────────────────── */
   .modeswitch {
     display: inline-grid; grid-template-columns: 1fr 1fr;
-    background: var(--surface-2); border: 1px solid var(--border-soft);
-    border-radius: var(--r-pill); padding: 4px; width: 100%; max-width: 460px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-pill); padding: 4px;
+    width: 100%; max-width: 460px;
   }
   .modeswitch button {
     background: transparent; border: none; cursor: pointer;
-    border-radius: var(--r-pill); padding: 11px 16px;
-    font-size: 13px; font-weight: 600; color: var(--ink-3);
+    border-radius: var(--r-pill); padding: 10px 16px;
+    font-size: 13px; font-weight: 700; color: var(--ink-3);
     display: flex; flex-direction: column; align-items: center; gap: 2px;
     touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    font-family: var(--font-sans);
+    transition: background 150ms, color 150ms, box-shadow 150ms;
   }
   .modeswitch button .sub {
-    font-size: 10.5px; font-weight: 500; color: var(--ink-4);
-    letter-spacing: 0.04em; text-transform: uppercase;
+    font-size: 10px; font-weight: 700; color: var(--ink-4);
+    letter-spacing: .06em; text-transform: uppercase;
   }
   .modeswitch button[aria-selected="true"] {
     background: var(--surface); color: var(--ink);
-    box-shadow: 0 1px 3px rgba(15,23,42,.06),0 1px 1px rgba(15,23,42,.04);
+    box-shadow: 0 1px 4px rgba(14,27,43,.10), 0 1px 1px rgba(14,27,43,.06);
   }
-  .modeswitch button[aria-selected="true"] .sub { color: var(--accent-strong); }
+  .modeswitch button[aria-selected="true"] .sub { color: var(--accent); }
   .modeswitch button:focus-visible { outline: none; box-shadow: var(--focus); }
-  @media (hover: none) and (pointer: coarse) { .modeswitch button { padding: 15px 16px; } }
+  @media (hover: none) and (pointer: coarse) { .modeswitch button { padding: 14px 16px; } }
 
+  /* ── Formula chip ────────────────────────────────────────────────────── */
   .formula-chip {
     display: inline-flex; align-items: center; gap: 10px;
-    padding: 8px 12px 8px 10px; background: var(--accent-soft);
-    border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border-soft));
-    border-radius: var(--r-sm); font-family: var(--font-mono);
-    font-size: 12.5px; color: var(--accent-ink); font-weight: 500;
+    padding: 7px 12px 7px 10px;
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-soft));
+    border-radius: var(--r-sm);
+    font-family: var(--font-mono); font-size: 12.5px;
+    color: var(--accent-ink); font-weight: 500;
   }
   .formula-chip .label {
-    font-family: var(--font-sans); font-size: 10.5px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: color-mix(in srgb, var(--accent-ink) 70%, transparent);
+    font-family: var(--font-sans); font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .1em;
+    color: color-mix(in srgb, var(--accent-ink) 65%, transparent);
   }
 
-  /* ── Inputs ─────────────────────────────────────────────────────────────── */
+  /* ── Inputs ──────────────────────────────────────────────────────────── */
   .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 480px) { .input-grid { grid-template-columns: 1fr; gap: 12px; } }
+
   .field { display: flex; flex-direction: column; gap: 5px; }
   .field-label {
     display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-    font-size: 13px; font-weight: 600; color: var(--ink-2);
+    font-size: 13px; font-weight: 700; color: var(--ink-2);
   }
-  .field-label .hint { font-size: 11.5px; font-weight: 500; color: var(--ink-3); }
+  .field-label .hint { font-size: 11.5px; font-weight: 600; color: var(--ink-3); }
   .field-label .swatch {
-    width: 8px; height: 8px; border-radius: 2px;
+    width: 8px; height: 8px; border-radius: 3px;
     display: inline-block; vertical-align: middle; margin-right: 6px;
   }
-  .field-range { font-size: 11.5px; color: var(--ink-4); font-family: var(--font-mono); font-weight: 500; }
-  .field-warning { font-size: 12px; color: var(--sev-3); font-weight: 500; line-height: 1.4; margin-top: 2px; }
+  .field-range {
+    font-size: 11.5px; color: var(--ink-4);
+    font-family: var(--font-mono); font-weight: 500;
+  }
+  .field-warning {
+    font-size: 12px; color: var(--sev-3); font-weight: 700; line-height: 1.4; margin-top: 2px;
+  }
+
   .input-wrap { position: relative; }
   .input-wrap input {
-    width: 100%; padding: 14px 44px 14px 14px;
-    font-family: var(--font-mono); font-size: 17px; font-weight: 500;
+    width: 100%; padding: 13px 44px 13px 14px;
+    font-family: var(--font-mono); font-size: 18px; font-weight: 600;
     color: var(--ink); background: var(--surface);
     border: 1.5px solid var(--border); border-radius: var(--r-md);
     outline: none; min-height: 50px; font-variant-numeric: tabular-nums;
     -moz-appearance: textfield;
+    transition: border-color 150ms, box-shadow 150ms;
   }
   .input-wrap input::-webkit-inner-spin-button,
   .input-wrap input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .input-wrap input::placeholder { color: var(--ink-4); font-weight: 400; }
   .input-wrap input:hover { border-color: var(--accent); }
-  .input-wrap input:focus-visible { border-color: var(--accent); box-shadow: var(--focus); }
+  .input-wrap input:focus-visible {
+    border-color: var(--accent);
+    box-shadow: var(--focus);
+    outline: none;
+  }
   .input-wrap .unit {
     position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
-    font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-3);
-    pointer-events: none; font-weight: 500;
+    font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);
+    pointer-events: none; font-weight: 600;
   }
   @media (hover: none) and (pointer: coarse) {
-    .input-wrap input { min-height: 58px; font-size: 18px; padding: 16px 44px 16px 16px; }
+    .input-wrap input { min-height: 56px; font-size: 19px; padding: 15px 46px 15px 16px; }
   }
 
+  /* ── Measurement hint ────────────────────────────────────────────────── */
   .measure-note {
-    font-size: 12.5px; color: var(--ink-3); line-height: 1.55;
-    background: var(--surface-2); border: 1px solid var(--border-soft);
-    border-radius: var(--r-sm); padding: 10px 12px;
+    font-size: 13px; color: var(--ink-3); line-height: 1.55;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-sm); padding: 10px 13px;
     display: flex; align-items: flex-start; gap: 8px;
   }
 
-  /* ── Diagram ─────────────────────────────────────────────────────────────── */
+  /* ── Diagrams ────────────────────────────────────────────────────────── */
   .diagram-frame {
     display: flex; justify-content: center; align-items: center;
-    padding: 24px; background: var(--surface-2);
+    padding: 20px; background: var(--surface-2);
     border: 1px solid var(--border-soft); border-radius: var(--r-md);
   }
   .diagram-frame svg { width: 100%; max-width: 280px; height: auto; }
 
-  /* ── Result ──────────────────────────────────────────────────────────────── */
+  /* ── Result card ─────────────────────────────────────────────────────── */
   .result-empty {
     margin-top: 4px; padding: 28px 20px; text-align: center;
-    border: 1px dashed var(--border); border-radius: var(--r-md);
-    background: var(--surface-2); color: var(--ink-3); font-size: 13.5px;
+    border: 1.5px dashed var(--border); border-radius: var(--r-md);
+    background: var(--surface-2); color: var(--ink-3);
+    font-size: 13.5px; font-weight: 500;
   }
+
   .result {
-    margin-top: 6px; border: 1px solid var(--border-soft);
-    border-radius: var(--r-md); background: var(--surface);
+    margin-top: 6px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
     position: relative; overflow: hidden;
+    transition: box-shadow 200ms;
   }
+  .result:hover { box-shadow: var(--shadow-pop); }
   .result::before {
-    content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
-    background:var(--sev-color,var(--accent));
+    content:""; position:absolute; left:0; top:0; bottom:0; width:5px;
+    background:var(--sev-color, var(--accent));
   }
+
   .result-head { padding:22px 22px 18px; display:flex; flex-direction:column; gap:6px; }
   .result-eyebrow-row {
     display:flex; align-items:center; gap:10px; font-size:11px;
-    text-transform:uppercase; letter-spacing:0.08em; font-weight:600; color:var(--ink-3);
+    text-transform:uppercase; letter-spacing:.09em; font-weight:700; color:var(--ink-3);
   }
   .result-eyebrow-row .sev-dot {
     width:8px; height:8px; border-radius:50%; background:var(--sev-color); display:inline-block;
   }
-  .result-eyebrow-row .sev-label { color:var(--ink-2); letter-spacing:0.06em; }
-  .result-number { display:flex; align-items:baseline; gap:12px; margin-top:2px; }
+  .result-eyebrow-row .sev-label { color:var(--ink-2); }
+
+  .result-number { display:flex; align-items:baseline; gap:12px; margin-top:4px; }
   .result-number .value {
-    font-family:var(--font-mono); font-size:56px; font-weight:500;
-    letter-spacing:-0.02em; color:var(--ink); line-height:1; font-variant-numeric:tabular-nums;
+    font-family:var(--font-mono); font-size:56px; font-weight:600;
+    letter-spacing:-.03em; color:var(--ink); line-height:1;
+    font-variant-numeric:tabular-nums;
   }
   .result-number .pct {
     font-family:var(--font-mono); font-size:28px; font-weight:400; color:var(--ink-3); line-height:1;
@@ -280,18 +405,19 @@ const GLOBAL_CSS = `
   }
   .result-number .range strong {
     display:block; font-size:13px; color:var(--ink);
-    font-family:var(--font-sans); font-weight:600; letter-spacing:-0.01em;
+    font-family:var(--font-display); font-weight:700; letter-spacing:-.01em;
   }
+
   .result-body {
-    padding:18px 22px 22px; border-top:1px solid var(--border-soft);
+    padding:16px 22px 22px; border-top:1px solid var(--border-soft);
     display:flex; flex-direction:column; gap:14px;
   }
   .result-section { display:flex; flex-direction:column; gap:5px; }
   .result-section h3 {
-    font-size:11px; text-transform:uppercase; letter-spacing:0.08em;
-    color:var(--ink-3); font-weight:600;
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--ink-3); font-weight:700; font-family:var(--font-sans);
   }
-  .result-section p  { font-size:14px; color:var(--ink); line-height:1.55; }
+  .result-section p  { font-size:14px; color:var(--ink-2); line-height:1.6; }
   .result-section ul {
     list-style:none; display:flex; flex-direction:column; gap:4px;
     font-size:13.5px; color:var(--ink-2); line-height:1.55;
@@ -301,9 +427,11 @@ const GLOBAL_CSS = `
     content:""; position:absolute; left:0; top:9px;
     width:4px; height:4px; background:var(--ink-4); border-radius:50%;
   }
+
   .result-actions {
     display:flex; gap:10px; padding:14px 22px;
     background:var(--surface-2); border-top:1px solid var(--border-soft);
+    border-radius:0 0 var(--r-lg) var(--r-lg);
     justify-content:flex-end;
   }
   @media (max-width: 480px) {
@@ -311,48 +439,67 @@ const GLOBAL_CSS = `
     .result-actions > * { width:100%; justify-content:center; }
   }
 
-  /* ── Buttons ─────────────────────────────────────────────────────────────── */
+  /* ── Buttons ─────────────────────────────────────────────────────────── */
   .btn {
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    padding:10px 18px; border-radius:var(--r-md); font-size:13.5px; font-weight:600;
-    cursor:pointer; border:1px solid transparent; font-family:var(--font-sans);
+    padding:10px 20px; border-radius:var(--r-pill);
+    font-size:13.5px; font-weight:700; font-family:var(--font-sans);
+    cursor:pointer; border:none; line-height:1;
     touch-action:manipulation; -webkit-tap-highlight-color:transparent;
     min-height:42px; white-space:nowrap;
+    transition: background 150ms, color 150ms, box-shadow 150ms, transform 100ms;
   }
   .btn:focus-visible { outline:none; box-shadow:var(--focus); }
-  .btn-primary { background:var(--accent); color:white; border-color:var(--accent); }
-  .btn-primary:hover { background:var(--accent-strong); }
-  .btn-primary.copied { background:var(--sev-1); border-color:var(--sev-1); color:white; }
-  .btn-ghost { background:var(--surface); color:var(--ink-2); border-color:var(--border); }
-  .btn-ghost:hover { background:var(--surface-2); border-color:var(--accent); color:var(--ink); }
-  @media (hover: none) and (pointer: coarse) { .btn { min-height:48px; padding: 12px 18px; } }
+  .btn:active { transform:scale(.98); }
+  .btn-primary {
+    background:var(--cta); color:#fff;
+    box-shadow: 0 4px 14px -4px rgba(240,130,24,.50);
+  }
+  .btn-primary:hover {
+    background:var(--cta-strong);
+    box-shadow: 0 6px 20px -4px rgba(240,130,24,.55);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active { transform:scale(.98); box-shadow:none; }
+  .btn-primary.copied { background:var(--sev-1); box-shadow:none; }
+  .btn-ghost {
+    background:var(--surface); color:var(--ink-2);
+    border:1.5px solid var(--border); box-shadow:var(--sh-1);
+  }
+  .btn-ghost:hover {
+    background:var(--surface-2); border-color:var(--accent); color:var(--ink);
+    transform: translateY(-1px);
+  }
+  .btn-ghost:active { transform:scale(.98); }
+  @media (hover: none) and (pointer: coarse) { .btn { min-height:48px; padding:13px 20px; } }
 
-  /* ── Alert ───────────────────────────────────────────────────────────────── */
+  /* ── Alert ───────────────────────────────────────────────────────────── */
   .alert {
     margin-top:4px; padding:12px 16px; border-radius:var(--r-md);
     background:color-mix(in srgb,var(--sev-3) 8%,var(--surface));
-    border:1px solid color-mix(in srgb,var(--sev-3) 30%,var(--border));
-    color:var(--sev-4); font-size:13.5px;
+    border:1px solid color-mix(in srgb,var(--sev-3) 28%,var(--border));
+    color:var(--sev-4); font-size:13.5px; font-weight:600;
     display:flex; align-items:flex-start; gap:10px;
   }
 
-  /* ── Severity table ──────────────────────────────────────────────────────── */
+  /* ── Severity reference table ────────────────────────────────────────── */
   .table-scroll { overflow-x:auto; }
   .table-scroll:focus-visible { outline:none; box-shadow:var(--focus); }
   .sev-table { width:100%; border-collapse:collapse; font-size:13px; }
   .sev-table th {
-    text-align:left; font-size:10.5px; text-transform:uppercase;
-    letter-spacing:0.08em; font-weight:600; color:var(--ink-3);
+    text-align:left; font-size:10px; text-transform:uppercase;
+    letter-spacing:.1em; font-weight:700; color:var(--ink-3);
     padding:10px 14px; background:var(--surface-2);
     border-bottom:1px solid var(--border-soft);
+    font-family:var(--font-sans);
   }
   .sev-table th:first-child { padding-left:var(--pad-card); }
   .sev-table th:last-child  { padding-right:var(--pad-card); }
-  .sev-table td { padding:14px; vertical-align:top; border-bottom:1px solid var(--border-soft); }
+  .sev-table td { padding:13px 14px; vertical-align:top; border-bottom:1px solid var(--border-soft); }
   .sev-table td:first-child { padding-left:var(--pad-card); }
   .sev-table td:last-child  { padding-right:var(--pad-card); }
   .sev-table tr:last-child td { border-bottom:none; }
-  .sev-table tr:hover td { background:color-mix(in srgb,var(--surface-2) 60%,var(--surface)); }
+  .sev-table tr:hover td { background:color-mix(in srgb,var(--surface-2) 55%,var(--surface)); }
   .sev-table .level-num {
     display:inline-flex; align-items:center; gap:8px;
     font-family:var(--font-mono); font-size:13px; font-weight:600; color:var(--ink);
@@ -368,18 +515,24 @@ const GLOBAL_CSS = `
   }
   .sev-table .rec-cell { font-size:12.5px; color:var(--ink-2); line-height:1.55; }
 
-  /* ── Accordion ───────────────────────────────────────────────────────────── */
+  /* ── Accordion ───────────────────────────────────────────────────────── */
   .accordion-toggle {
     width:100%; background:transparent; border:none; cursor:pointer;
-    padding:22px var(--pad-card); display:flex; align-items:center;
-    justify-content:space-between; text-align:left; font-family:inherit;
+    padding:20px var(--pad-card);
+    display:flex; align-items:center; justify-content:space-between;
+    text-align:left; font-family:var(--font-sans);
+    border-radius:var(--r-lg);
+    transition: background 150ms;
   }
+  .accordion-toggle:hover { background:var(--surface-2); }
   .accordion-toggle:focus-visible { outline:none; box-shadow:inset 0 0 0 2px var(--accent); border-radius:var(--r-lg); }
   .accordion-toggle .chev { color:var(--ink-3); }
   @media (prefers-reduced-motion: no-preference) {
-    .accordion-toggle .chev { transition: transform 0.2s; }
+    .accordion-toggle .chev { transition:transform 200ms; }
   }
-  .accordion-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  .accordion-toggle[aria-expanded="true"] .chev { transform:rotate(180deg); }
+  .accordion-toggle[aria-expanded="true"] { background:var(--surface-2); border-radius:var(--r-lg) var(--r-lg) 0 0; }
+
   .accordion-body {
     padding:0 var(--pad-card) var(--pad-card);
     border-top:1px solid var(--border-soft);
@@ -388,12 +541,12 @@ const GLOBAL_CSS = `
   .age-block { display:grid; grid-template-columns:140px 1fr; gap:18px; padding-top:18px; }
   @media (max-width: 600px) { .age-block { grid-template-columns:1fr; gap:6px; } }
   .age-tag {
-    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em;
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.09em;
     color:var(--ink-3); display:flex; align-items:flex-start; gap:8px; padding-top:2px;
   }
   .age-tag .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:4px; flex-shrink:0; }
   .age-content { font-size:13.5px; color:var(--ink-2); line-height:1.6; display:flex; flex-direction:column; gap:10px; }
-  .age-content strong { color:var(--ink); font-weight:600; }
+  .age-content strong { color:var(--ink); font-weight:700; }
   .age-content ul { list-style:none; display:flex; flex-direction:column; gap:6px; margin-top:2px; }
   .age-content li { position:relative; padding-left:14px; }
   .age-content li::before {
@@ -402,8 +555,11 @@ const GLOBAL_CSS = `
   }
   .cond-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:4px; }
   @media (max-width: 600px) { .cond-grid { grid-template-columns:1fr; } }
-  .cond-card { border:1px solid var(--border-soft); border-radius:var(--r-md); padding:14px 16px; background:var(--surface-2); }
-  .cond-card h5 { font-size:13.5px; font-weight:600; color:var(--ink); margin-bottom:8px; }
+  .cond-card {
+    border:1px solid var(--border-soft); border-radius:var(--r-md);
+    padding:14px 16px; background:var(--surface-2);
+  }
+  .cond-card h5 { font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:8px; }
   .cond-card .eyebrow { margin-top:10px; margin-bottom:4px; }
   .cond-card ul { list-style:none; display:flex; flex-direction:column; gap:4px; }
   .cond-card li { font-size:12.5px; color:var(--ink-2); padding-left:14px; position:relative; }
@@ -412,26 +568,27 @@ const GLOBAL_CSS = `
     width:4px; height:4px; background:var(--ink-4); border-radius:50%;
   }
 
-  /* ── Toast ───────────────────────────────────────────────────────────────── */
+  /* ── Toast ───────────────────────────────────────────────────────────── */
   .toast {
     position:fixed; top:80px; left:50%;
     transform:translateX(-50%) translateY(0);
     background:var(--ink); color:var(--bg);
-    padding:10px 16px; border-radius:var(--r-pill);
-    font-size:13px; font-weight:500; box-shadow:var(--shadow-pop);
+    padding:10px 18px; border-radius:var(--r-pill);
+    font-size:13px; font-weight:700; box-shadow:var(--shadow-pop);
     z-index:100; pointer-events:none;
     display:flex; align-items:center; gap:8px;
   }
   .toast.hidden { opacity:0; transform:translateX(-50%) translateY(-6px); }
   @media (prefers-reduced-motion: no-preference) {
-    .toast { transition: opacity 0.2s, transform 0.2s; }
+    .toast { transition:opacity 0.2s, transform 0.2s; }
   }
 
-  /* ── Sticky mobile result ────────────────────────────────────────────────── */
+  /* ── Sticky mobile result bar ────────────────────────────────────────── */
   .sticky-result {
     display:none; position:fixed; left:0; right:0; bottom:0;
-    background:var(--surface); border-top:2px solid var(--accent);
-    box-shadow:0 -4px 24px rgba(15,23,42,.08);
+    background:var(--surface);
+    border-top:3px solid var(--accent);
+    box-shadow:0 -4px 24px rgba(14,27,43,.10);
     padding:12px 16px calc(12px + env(safe-area-inset-bottom));
     z-index:40; align-items:center; gap:12px; justify-content:space-between;
   }
@@ -447,10 +604,10 @@ const GLOBAL_CSS = `
     main { padding-bottom:100px !important; }
   }
 
-  /* ── Legal disclaimer modal ──────────────────────────────────────────────── */
+  /* ── Legal disclaimer modal ──────────────────────────────────────────── */
   .disc-overlay {
     position:fixed; inset:0; z-index:999;
-    background:rgba(0,0,0,0.72);
+    background:rgba(8,15,26,.80);
     display:flex; align-items:center; justify-content:center;
     padding:20px;
   }
@@ -460,15 +617,18 @@ const GLOBAL_CSS = `
   }
   .disc-head {
     background:color-mix(in srgb,var(--sev-4) 7%,var(--surface));
-    border-bottom:1px solid color-mix(in srgb,var(--sev-4) 18%,var(--border));
+    border-bottom:1px solid color-mix(in srgb,var(--sev-4) 16%,var(--border));
     padding:24px 28px 20px;
     display:flex; align-items:flex-start; gap:14px;
   }
   .disc-head-icon { color:var(--sev-4); flex-shrink:0; margin-top:2px; }
-  .disc-head h1 { font-size:17px; font-weight:700; color:var(--ink); line-height:1.2; }
-  .disc-head .sub { font-size:12.5px; color:var(--ink-3); margin-top:3px; }
+  .disc-head h1 {
+    font-family:var(--font-display);
+    font-size:18px; font-weight:700; color:var(--ink); line-height:1.2;
+  }
+  .disc-head .sub { font-size:12.5px; color:var(--ink-3); font-weight:600; margin-top:3px; }
   .disc-body { padding:24px 28px; display:flex; flex-direction:column; gap:16px; }
-  .disc-body p { font-size:14px; color:var(--ink); line-height:1.65; }
+  .disc-body p { font-size:14px; color:var(--ink-2); line-height:1.65; }
   .disc-list {
     list-style:none; display:flex; flex-direction:column; gap:10px;
     padding:16px; background:var(--surface-2);
@@ -487,29 +647,50 @@ const GLOBAL_CSS = `
     background:var(--surface-2); display:flex; flex-direction:column; gap:14px;
   }
   .disc-pdf {
-    font-size:13px; color:var(--accent-strong); font-weight:500;
+    font-size:13px; color:var(--accent); font-weight:700;
     display:inline-flex; align-items:center; gap:6px;
   }
   .disc-cta {
-    width:100%; padding:14px; font-size:15px; font-weight:700;
-    background:var(--accent); color:white; border:none;
-    border-radius:var(--r-md); cursor:pointer; font-family:inherit;
-    min-height:50px;
+    width:100%; padding:14px; font-size:15px; font-weight:800;
+    background:var(--cta); color:#fff; border:none;
+    border-radius:var(--r-pill); cursor:pointer; font-family:var(--font-sans);
+    min-height:52px; letter-spacing:.01em;
+    box-shadow: 0 4px 16px -4px rgba(240,130,24,.55);
+    transition: background 150ms, transform 100ms, box-shadow 150ms;
   }
-  .disc-cta:hover { background:var(--accent-strong); }
+  .disc-cta:hover {
+    background:var(--cta-strong);
+    box-shadow: 0 6px 22px -4px rgba(240,130,24,.60);
+    transform:translateY(-1px);
+  }
+  .disc-cta:active { transform:scale(.98); box-shadow:none; }
   .disc-cta:focus-visible { outline:none; box-shadow:var(--focus); }
+
+  /* ── Card footer strip ───────────────────────────────────────────────── */
+  .card-footer-strip {
+    padding:10px var(--pad-card) 12px;
+    border-top:1px solid var(--border-soft);
+    background:var(--surface-2);
+    font-size:11.5px; color:var(--ink-3); line-height:1.6;
+    border-bottom-left-radius:var(--r-lg);
+    border-bottom-right-radius:var(--r-lg);
+    display:flex; align-items:center; gap:6px;
+  }
 
   .sr-only {
     position:absolute; width:1px; height:1px; padding:0; margin:-1px;
     overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
   }
 
+  /* ── Page footer ─────────────────────────────────────────────────────── */
   footer {
-    text-align:center; padding:16px 32px 32px;
+    text-align:center; padding:20px 32px 36px;
     font-size:12px; color:var(--ink-3);
     display:flex; justify-content:center; align-items:center;
-    gap:8px; flex-wrap:wrap; max-width:1400px; margin:0 auto;
+    gap:8px; flex-wrap:wrap; max-width:1200px; margin:0 auto;
   }
+  footer a { font-weight:600; }
+  .footer-sep { color:var(--border); }
 `;
 
 if (typeof document !== "undefined") {
@@ -524,7 +705,7 @@ if (typeof document !== "undefined") {
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const Ic = ({ size=16, d, children, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-       stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+       stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
        aria-hidden="true" {...p}>
     {d ? <path d={d}/> : children}
   </svg>
@@ -537,16 +718,7 @@ const IcChevron  = p => <Ic {...p} d="m6 9 6 6 6-6"/>;
 const IcShield   = p => <Ic {...p} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>;
 const IcExternal = p => <Ic {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></Ic>;
 
-const BrandMark = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-       stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <ellipse cx="12" cy="12" rx="9" ry="8"/>
-    <path d="M5 9h14" strokeDasharray="2 2" opacity="0.6"/>
-    <circle cx="12" cy="12" r="1.5" fill="white" stroke="none"/>
-  </svg>
-);
-
-// ─── Clinical measurement ranges (mm, 0–24 month infants) ─────────────────────
+// ─── Clinical ranges (mm, 0–24 month infants) ─────────────────────────────────
 const RANGES = {
   diagA: { min: 80, max: 200, label: "Typical: 80–200 mm" },
   diagB: { min: 80, max: 200, label: "Typical: 80–200 mm" },
@@ -574,13 +746,12 @@ function processCvai(a, b) {
   const a10 = toTenths(a), b10 = toTenths(b);
   const diff = Math.abs(a10 - b10), max = Math.max(a10, b10);
   if (max === 0) return null;
-  // Integer cross-multiplication avoids float rounding at boundary values
   let sevIdx;
-  if      (diff * 200 <  7 * max) sevIdx = 0; // < 3.5%
-  else if (diff *  16 <      max) sevIdx = 1; // < 6.25%
-  else if (diff * 400 < 35 * max) sevIdx = 2; // < 8.75%
-  else if (diff * 100 <= 11 * max) sevIdx = 3; // ≤ 11.0%
-  else                             sevIdx = 4;
+  if      (diff * 200 <  7 * max)  sevIdx = 0;
+  else if (diff *  16 <      max)  sevIdx = 1;
+  else if (diff * 400 < 35 * max)  sevIdx = 2;
+  else if (diff * 100 <= 11 * max) sevIdx = 3;
+  else                              sevIdx = 4;
   const displayCvai = (diff / max) * 100;
   if (!Number.isFinite(displayCvai)) return null;
   return { displayCvai, sevIdx };
@@ -637,10 +808,9 @@ function fmtTimestamp() {
   const n = new Date();
   return `${n.toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})}    ${n.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true})}`;
 }
-
 function buildCvaiNote(cvai, sev, rawA, rawB) {
   return [
-    "PLAGIOCEPHALY ASSESSMENT", fmtTimestamp(), "",
+    "PLAGIOCEPHALY ASSESSMENT — Therapedia Physical Therapy", fmtTimestamp(), "",
     `CVAI: ${cvai.toFixed(2)}%`,
     `Severity: Level ${sev.level} — ${sev.label}  (range: ${sev.rangeFull})`, "",
     "Measurements (caliper):",
@@ -653,13 +823,12 @@ function buildCvaiNote(cvai, sev, rawA, rawB) {
     "Note: This is a reference tool, not a diagnostic device.",
   ].join("\n");
 }
-
 function buildCrNote(cr, res, rawMl, rawAp) {
   const ref = res.key === "ortho" ? "Yes — orthotic evaluation recommended"
             : res.key === "watch" ? "Monitor — reassess at next visit"
             : "No — within normal range";
   return [
-    "BRACHYCEPHALY ASSESSMENT", fmtTimestamp(), "",
+    "BRACHYCEPHALY ASSESSMENT — Therapedia Physical Therapy", fmtTimestamp(), "",
     `Cephalic Ratio: ${cr.toFixed(1)}%`,
     `Assessment: ${res.label}  (range: ${res.rangeFull})`, "",
     "Measurements (caliper):",
@@ -680,7 +849,7 @@ function useCopy() {
     try {
       if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
       else {
-        const el = Object.assign(document.createElement("textarea"), { value: text, style: "position:fixed;top:-9999px;opacity:0" });
+        const el = Object.assign(document.createElement("textarea"), { value:text, style:"position:fixed;top:-9999px;opacity:0" });
         document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el);
       }
       setCopied(true);
@@ -692,27 +861,39 @@ function useCopy() {
   return [copied, copy];
 }
 
+function useScrolled(threshold = 8) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const el = document.querySelector('.tp-scroll-host') || window;
+    const handler = () => setScrolled((el === window ? window.scrollY : el.scrollTop) > threshold);
+    el.addEventListener('scroll', handler, { passive: true });
+    handler();
+    return () => el.removeEventListener('scroll', handler);
+  }, [threshold]);
+  return scrolled;
+}
+
 // ─── Diagrams ─────────────────────────────────────────────────────────────────
 function DiagramCVAI() {
   return (
     <div className="diagram-frame" role="img"
-      aria-label="Top-down skull view: Diagonal A (longer, solid line) and Diagonal B (shorter, dashed), both measured at 30° from nose centre to posterior skull.">
+      aria-label="Top-down skull view: Diagonal A (longer, solid) and Diagonal B (shorter, dashed), both at 30° from nose centre.">
       <svg viewBox="0 0 280 220" xmlns="http://www.w3.org/2000/svg">
-        <line x1="140" y1="20" x2="140" y2="200" stroke="var(--border)" strokeWidth="0.75" strokeDasharray="2 3"/>
-        <line x1="40"  y1="110" x2="240" y2="110" stroke="var(--border)" strokeWidth="0.75" strokeDasharray="2 3"/>
-        <ellipse cx="140" cy="110" rx="100" ry="86" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.5"/>
-        <path d="M134 25 Q140 19 146 25" fill="none" stroke="var(--ink)" strokeWidth="1.5"/>
-        <rect x="36"  y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.25"/>
-        <rect x="236" y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.25"/>
-        <line x1="68" y1="48" x2="218" y2="180" stroke="var(--accent)" strokeWidth="2"/>
-        <circle cx="68"  cy="48"  r="4" fill="var(--accent)"/>
-        <circle cx="218" cy="180" r="4" fill="var(--accent)"/>
+        <line x1="140" y1="20" x2="140" y2="200" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
+        <line x1="40" y1="110" x2="240" y2="110" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
+        <ellipse cx="140" cy="110" rx="100" ry="86" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.5"/>
+        <path d="M134 25 Q140 19 146 25" fill="none" stroke="var(--ink-2)" strokeWidth="1.5"/>
+        <rect x="36"  y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.25"/>
+        <rect x="236" y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.25"/>
+        <line x1="68" y1="48" x2="218" y2="180" stroke="var(--brand-blue)" strokeWidth="2"/>
+        <circle cx="68"  cy="48"  r="4" fill="var(--brand-blue)"/>
+        <circle cx="218" cy="180" r="4" fill="var(--brand-blue)"/>
         <line x1="212" y1="48" x2="76" y2="172" stroke="var(--ink-3)" strokeWidth="1.75" strokeDasharray="4 3"/>
         <circle cx="212" cy="48"  r="4" fill="var(--ink-3)"/>
         <circle cx="76"  cy="172" r="4" fill="var(--ink-3)"/>
-        <text x="50"  y="42"  fontSize="11" fontWeight="600" fill="var(--accent-strong)" fontFamily="var(--font-mono)">A</text>
-        <text x="222" y="44"  fontSize="11" fontWeight="600" fill="var(--ink-2)"         fontFamily="var(--font-mono)">B</text>
-        <text x="140" y="214" fontSize="9"  fill="var(--ink-3)" textAnchor="middle"      fontFamily="var(--font-mono)">A = longer · B = shorter · 30° from nose</text>
+        <text x="50"  y="42"  fontSize="11" fontWeight="700" fill="var(--brand-blue)"  fontFamily="var(--font-mono)">A</text>
+        <text x="222" y="44"  fontSize="11" fontWeight="600" fill="var(--ink-3)"       fontFamily="var(--font-mono)">B</text>
+        <text x="140" y="214" fontSize="9"  fill="var(--ink-3)" textAnchor="middle"    fontFamily="var(--font-mono)">A = longer · B = shorter · 30° from nose</text>
       </svg>
     </div>
   );
@@ -721,23 +902,23 @@ function DiagramCVAI() {
 function DiagramCR() {
   return (
     <div className="diagram-frame" role="img"
-      aria-label="Top-down skull view: M/L width (horizontal arrow) and A/P length (vertical arrow).">
+      aria-label="Top-down skull view: M/L width (horizontal) and A/P length (vertical).">
       <svg viewBox="0 0 280 220" xmlns="http://www.w3.org/2000/svg">
-        <line x1="140" y1="14"  x2="140" y2="206" stroke="var(--border)" strokeWidth="0.75" strokeDasharray="2 3"/>
-        <line x1="32"  y1="110" x2="248" y2="110" stroke="var(--border)" strokeWidth="0.75" strokeDasharray="2 3"/>
-        <ellipse cx="140" cy="110" rx="100" ry="86" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.5"/>
-        <path d="M134 25 Q140 19 146 25" fill="none" stroke="var(--ink)" strokeWidth="1.5"/>
-        <rect x="36"  y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.25"/>
-        <rect x="236" y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.25"/>
-        <line x1="46" y1="110" x2="234" y2="110" stroke="var(--accent)" strokeWidth="2"/>
-        <polygon points="46,110 56,105 56,115"  fill="var(--accent)"/>
-        <polygon points="234,110 224,105 224,115" fill="var(--accent)"/>
+        <line x1="140" y1="14"  x2="140" y2="206" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
+        <line x1="32"  y1="110" x2="248" y2="110" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
+        <ellipse cx="140" cy="110" rx="100" ry="86" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.5"/>
+        <path d="M134 25 Q140 19 146 25" fill="none" stroke="var(--ink-2)" strokeWidth="1.5"/>
+        <rect x="36"  y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.25"/>
+        <rect x="236" y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.25"/>
+        <line x1="46" y1="110" x2="234" y2="110" stroke="var(--brand-blue)" strokeWidth="2"/>
+        <polygon points="46,110 56,105 56,115"    fill="var(--brand-blue)"/>
+        <polygon points="234,110 224,105 224,115" fill="var(--brand-blue)"/>
         <line x1="140" y1="28" x2="140" y2="192" stroke="var(--ink-3)" strokeWidth="2" strokeDasharray="4 3"/>
         <polygon points="140,28 135,38 145,38"    fill="var(--ink-3)"/>
         <polygon points="140,192 135,182 145,182" fill="var(--ink-3)"/>
-        <text x="14"  y="114" fontSize="11" fontWeight="600" fill="var(--accent-strong)" fontFamily="var(--font-mono)">M/L</text>
-        <text x="148" y="22"  fontSize="11" fontWeight="600" fill="var(--ink-2)"         fontFamily="var(--font-mono)">A/P</text>
-        <text x="140" y="214" fontSize="9"  fill="var(--ink-3)" textAnchor="middle"      fontFamily="var(--font-mono)">M/L = medial-lateral · A/P = anterior-posterior</text>
+        <text x="14"  y="114" fontSize="11" fontWeight="700" fill="var(--brand-blue)" fontFamily="var(--font-mono)">M/L</text>
+        <text x="148" y="22"  fontSize="11" fontWeight="600" fill="var(--ink-3)"      fontFamily="var(--font-mono)">A/P</text>
+        <text x="140" y="214" fontSize="9"  fill="var(--ink-3)" textAnchor="middle"   fontFamily="var(--font-mono)">M/L = medial-lateral · A/P = anterior-posterior</text>
       </svg>
     </div>
   );
@@ -780,8 +961,7 @@ function LegalDisclaimer({ onDismiss }) {
           </ul>
         </div>
         <div className="disc-foot">
-          <a href={CHOA_PDF} target="_blank" rel="noopener noreferrer"
-             className="disc-pdf"
+          <a href={CHOA_PDF} target="_blank" rel="noopener noreferrer" className="disc-pdf"
              aria-label="Official CHOA Plagiocephaly Severity Scale PDF (opens in new tab)">
             <IcExternal size={14}/>Official CHOA Plagiocephaly Severity Scale PDF
           </a>
@@ -835,27 +1015,26 @@ function ResultCard({ eyebrow, value, unit, rangeMain, rangeSub,
                       copyText, onCopy, onClear }) {
   const [copied, copy] = useCopy();
   const ref = useRef(null);
-
   useEffect(() => {
     if (!ref.current) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) { ref.current.style.opacity = "1"; ref.current.style.transition = "none"; return; }
+    if (reduced) { ref.current.style.opacity="1"; ref.current.style.transition="none"; return; }
     ref.current.style.opacity = "0";
     requestAnimationFrame(() => {
       if (!ref.current) return;
-      ref.current.style.transition = "opacity 0.22s ease";
+      ref.current.style.transition = "opacity 0.2s ease";
       ref.current.style.opacity = "1";
     });
   }, [value]);
 
   return (
-    <div className="result" style={{"--sev-color": sevVar}} ref={ref}
+    <div className="result" style={{"--sev-color":sevVar}} ref={ref}
          role="status" aria-live="polite" aria-atomic="true">
       <div className="result-head">
         <div className="result-eyebrow-row">
           <span className="sev-dot" aria-hidden="true"/>
           <span>{eyebrow}</span>
-          <span style={{color:"var(--ink-4)"}} aria-hidden="true">·</span>
+          <span style={{color:"var(--border)"}} aria-hidden="true">·</span>
           <span className="sev-label">{sevLabel}</span>
         </div>
         <div className="result-number">
@@ -920,19 +1099,13 @@ function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
       <div className="input-grid">
         <NumberInput id="cvai-a" label="Diagonal A" hint="longer"
                      rangeLabel={RANGES.diagA.label}
-                     swatchVar="var(--accent)" value={a} onChange={setA} nextId="cvai-b"/>
+                     swatchVar="var(--brand-blue)" value={a} onChange={setA} nextId="cvai-b"/>
         <NumberInput id="cvai-b" label="Diagonal B" hint="shorter"
                      rangeLabel={RANGES.diagB.label}
                      swatchVar="var(--ink-3)" value={b} onChange={setB}/>
       </div>
-      {warnMsg && (
-        <div className="field-warning" role="status" aria-live="polite">
-          {warnMsg}
-        </div>
-      )}
-      {bothEmpty && (
-        <div className="result-empty">Enter both diagonal measurements to calculate CVAI</div>
-      )}
+      {warnMsg && <div className="field-warning" role="status" aria-live="polite">{warnMsg}</div>}
+      {bothEmpty && <div className="result-empty">Enter both diagonal measurements to calculate CVAI</div>}
       {errorMsg && <AlertBox>{errorMsg}</AlertBox>}
       {logicErr && <AlertBox>{logicErr}</AlertBox>}
       {sev && (
@@ -954,7 +1127,7 @@ function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
   const errorMsg  = (!vMl.ok && !vMl.empty) ? vMl.error : (!vAp.ok && !vAp.empty) ? vAp.error : null;
   const warnMsg   = !errorMsg ? (vMl.warning || vAp.warning) : null;
   const result    = (!anyEmpty && !errorMsg) ? processCr(vMl.value, vAp.value) : null;
-  const res       = result ? { ...CR_LEVELS[result.key], key: result.key } : null;
+  const res       = result ? { ...CR_LEVELS[result.key], key:result.key } : null;
   const cr        = result?.displayCr ?? null;
   const copyText  = useMemo(() => res ? buildCrNote(cr, res, ml, ap) : "", [cr, res?.key, ml, ap]);
 
@@ -968,19 +1141,13 @@ function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
       <div className="input-grid">
         <NumberInput id="cr-ml" label="Width (M/L)" hint="medial-lateral"
                      rangeLabel={RANGES.crMl.label}
-                     swatchVar="var(--accent)" value={ml} onChange={setMl} nextId="cr-ap"/>
+                     swatchVar="var(--brand-blue)" value={ml} onChange={setMl} nextId="cr-ap"/>
         <NumberInput id="cr-ap" label="Length (A/P)" hint="anterior-posterior"
                      rangeLabel={RANGES.crAp.label}
                      swatchVar="var(--ink-3)" value={ap} onChange={setAp}/>
       </div>
-      {warnMsg && (
-        <div className="field-warning" role="status" aria-live="polite">
-          {warnMsg}
-        </div>
-      )}
-      {bothEmpty && (
-        <div className="result-empty">Enter both measurements to calculate Cephalic Ratio</div>
-      )}
+      {warnMsg && <div className="field-warning" role="status" aria-live="polite">{warnMsg}</div>}
+      {bothEmpty && <div className="result-empty">Enter both measurements to calculate Cephalic Ratio</div>}
       {errorMsg && <AlertBox>{errorMsg}</AlertBox>}
       {res && (
         <ResultCard eyebrow="Cephalic Ratio" value={cr.toFixed(1)} unit=""
@@ -1003,14 +1170,14 @@ function SeverityTable() {
         <span className="card-meta">5 levels · CVAI</span>
       </div>
       <div className="table-scroll" tabIndex={0} role="region"
-           aria-label="CHOA severity scale reference table — scroll horizontally for all columns">
+           aria-label="CHOA severity scale reference table">
         <table className="sev-table">
           <caption className="sr-only">
             CHOA Plagiocephaly Severity Scale: five levels from normal (Level 1) to very severe (Level 5)
           </caption>
           <thead>
             <tr>
-              {["Level", "CVAI", "Presentation", "Recommendation"].map(h => (
+              {["Level","CVAI","Presentation","Recommendation"].map(h => (
                 <th key={h} scope="col">{h}</th>
               ))}
             </tr>
@@ -1019,13 +1186,13 @@ function SeverityTable() {
             {SEVERITY.map(s => (
               <tr key={s.level}>
                 <td>
-                  <span className="level-num" style={{"--sev-color": s.sevVar}}>
+                  <span className="level-num" style={{"--sev-color":s.sevVar}}>
                     <span className="bar" aria-hidden="true"/>L{s.level}
                   </span>
                 </td>
                 <td className="range-cell">{s.range}</td>
                 <td className="pres-cell">
-                  <ul>{s.presentation.map((p, i) => <li key={i}>{p}</li>)}</ul>
+                  <ul>{s.presentation.map((p,i) => <li key={i}>{p}</li>)}</ul>
                 </td>
                 <td className="rec-cell">{s.recommendation}</td>
               </tr>
@@ -1115,11 +1282,11 @@ function StickyResult({ visible, value, label, sevVar, copyText, onCopy }) {
   return (
     <div className={`sticky-result${visible ? " visible" : ""}`} aria-hidden="true">
       <div className="sticky-label">
-        <span className="dot" style={{background: sevVar}}/>
+        <span className="dot" style={{background:sevVar}}/>
         <span>{value}  ·  {label}</span>
       </div>
       <button className={`btn btn-primary${copied ? " copied" : ""}`}
-              style={{fontSize:12,padding:"8px 14px",minHeight:36}}
+              style={{fontSize:12,padding:"8px 16px",minHeight:36,borderRadius:"var(--r-pill)"}}
               onClick={() => { copy(copyText); onCopy(); }}>
         {copied ? <IcCheck size={13}/> : <IcCopy size={13}/>}
         {copied ? "Copied" : "Copy"}
@@ -1138,10 +1305,9 @@ export default function App() {
   const [crAp,  setCrAp]  = useState("");
   const [toast, setToast] = useState(false);
   const toastT = useRef(null);
+  const scrolled = useScrolled();
 
-  useEffect(() => {
-    document.title = "Plagiocephaly Assessment — CHOA Clinical Reference";
-  }, []);
+  useEffect(() => { document.title = "Plagiocephaly Assessment — Therapedia PT"; }, []);
 
   const clearAll = () => { setCvaiA(""); setCvaiB(""); setCrMl(""); setCrAp(""); };
 
@@ -1152,39 +1318,29 @@ export default function App() {
   };
   useEffect(() => () => clearTimeout(toastT.current), []);
 
-  const TABS = ["cvai", "cr"];
+  const TABS = ["cvai","cr"];
   const handleTabKey = useCallback(e => {
     const i = TABS.indexOf(tab);
-    if (e.key === "ArrowRight") { e.preventDefault(); const next = TABS[(i + 1) % 2]; setTab(next); document.getElementById(`tab-${next}`)?.focus(); }
-    if (e.key === "ArrowLeft")  { e.preventDefault(); const prev = TABS[(i - 1 + 2) % 2]; setTab(prev); document.getElementById(`tab-${prev}`)?.focus(); }
+    if (e.key === "ArrowRight") { e.preventDefault(); const next=TABS[(i+1)%2]; setTab(next); document.getElementById(`tab-${next}`)?.focus(); }
+    if (e.key === "ArrowLeft")  { e.preventDefault(); const prev=TABS[(i-1+2)%2]; setTab(prev); document.getElementById(`tab-${prev}`)?.focus(); }
   }, [tab]);
 
   const sticky = useMemo(() => {
     if (tab === "cvai") {
-      const vA = validateMeasurement(cvaiA, "A", RANGES.diagA);
-      const vB = validateMeasurement(cvaiB, "B", RANGES.diagB);
+      const vA=validateMeasurement(cvaiA,"A",RANGES.diagA), vB=validateMeasurement(cvaiB,"B",RANGES.diagB);
       if (vA.ok && vB.ok) {
         const r = processCvai(vA.value, vB.value);
-        if (r) {
-          const s = SEVERITY[r.sevIdx];
-          return { visible:true, value:`CVAI ${r.displayCvai.toFixed(1)}%`, label:`Level ${s.level}`,
-                   sevVar:s.sevVar, copyText:buildCvaiNote(r.displayCvai, s, cvaiA, cvaiB) };
-        }
+        if (r) { const s=SEVERITY[r.sevIdx]; return { visible:true, value:`CVAI ${r.displayCvai.toFixed(1)}%`, label:`Level ${s.level}`, sevVar:s.sevVar, copyText:buildCvaiNote(r.displayCvai,s,cvaiA,cvaiB) }; }
       }
     } else {
-      const vM = validateMeasurement(crMl, "M/L", RANGES.crMl);
-      const vA = validateMeasurement(crAp, "A/P", RANGES.crAp);
+      const vM=validateMeasurement(crMl,"M/L",RANGES.crMl), vA=validateMeasurement(crAp,"A/P",RANGES.crAp);
       if (vM.ok && vA.ok) {
         const r = processCr(vM.value, vA.value);
-        if (r) {
-          const l = CR_LEVELS[r.key];
-          return { visible:true, value:`CR ${r.displayCr.toFixed(1)}`, label:l.short,
-                   sevVar:l.sevVar, copyText:buildCrNote(r.displayCr, { ...l, key:r.key }, crMl, crAp) };
-        }
+        if (r) { const l=CR_LEVELS[r.key]; return { visible:true, value:`CR ${r.displayCr.toFixed(1)}`, label:l.short, sevVar:l.sevVar, copyText:buildCrNote(r.displayCr,{...l,key:r.key},crMl,crAp) }; }
       }
     }
-    return { visible: false };
-  }, [tab, cvaiA, cvaiB, crMl, crAp]);
+    return { visible:false };
+  }, [tab,cvaiA,cvaiB,crMl,crAp]);
 
   return (
     <>
@@ -1192,17 +1348,21 @@ export default function App() {
       <Toast visible={toast}/>
       <a href="#main" className="skip-nav">Skip to main content</a>
 
-      <header className="appbar">
+      <header className={`appbar${scrolled ? " is-scrolled" : ""}`}>
         <div className="appbar-inner">
           <div className="brand">
-            <div className="brand-mark" aria-hidden="true"><BrandMark/></div>
+            {/* Therapedia logo */}
+            <img src="/logo-color.png" alt="Therapedia" className="brand-logo"/>
+            <span className="brand-divider" aria-hidden="true"/>
             <div className="brand-text">
-              <span className="brand-name">Plagiocephaly Assessment</span>
-              <span className="brand-meta">CVAI · Cephalic Ratio · CHOA scale</span>
+              <span className="brand-name" aria-label="Therapedia Plagiocephaly Assessment">
+                <span className="thera">Thera</span><em className="pedia">pedia</em><span className="dot">.</span>
+              </span>
+              <span className="brand-meta">Plagiocephaly Assessment · Physical Therapy</span>
             </div>
           </div>
           <span className="status-pill" aria-label="No patient data is stored or transmitted">
-            <IcShield size={13} aria-hidden="true"/>No data stored
+            <IcShield size={12} aria-hidden="true"/>No data stored
           </span>
         </div>
       </header>
@@ -1213,14 +1373,15 @@ export default function App() {
             <div className="card-pad" style={{paddingBottom:0}}>
               <div className="card-head-flex" style={{marginBottom:18}}>
                 <div>
-                  <h1 id="calc-h" className="card-title" style={{fontSize:18}}>
+                  <h1 id="calc-h" className="card-title" style={{fontSize:20}}>
                     {tab === "cvai" ? "Cranial Vault Asymmetry Index" : "Cephalic Ratio"}
                   </h1>
                   <div className="card-meta" style={{marginTop:4}}>
                     {tab === "cvai" ? "Diagonal asymmetry · plagiocephaly" : "Width-to-length ratio · brachycephaly"}
                   </div>
                 </div>
-                <span className="formula-chip" aria-label={tab === "cvai" ? "Formula: absolute difference of A and B divided by max of A and B, times 100" : "Formula: M/L divided by A/P, times 100"}>
+                <span className="formula-chip"
+                      aria-label={tab === "cvai" ? "Formula: absolute difference of A and B divided by max, times 100" : "Formula: M/L divided by A/P times 100"}>
                   <span className="label" aria-hidden="true">f(x)</span>
                   <span aria-hidden="true">{tab === "cvai" ? "|A−B| ÷ max(A,B) × 100" : "(M/L ÷ A/P) × 100"}</span>
                 </span>
@@ -1240,22 +1401,17 @@ export default function App() {
             </div>
             <div className="card-pad">
               <div id="panel-cvai" role="tabpanel" aria-labelledby="tab-cvai"
-                   style={{display: tab === "cvai" ? "flex" : "none", flexDirection:"column", gap:10}}>
+                   style={{display:tab==="cvai"?"flex":"none",flexDirection:"column",gap:10}}>
                 <CvaiPanel a={cvaiA} setA={setCvaiA} b={cvaiB} setB={setCvaiB}
                            onCopy={showToast} onClear={clearAll}/>
               </div>
               <div id="panel-cr" role="tabpanel" aria-labelledby="tab-cr"
-                   style={{display: tab === "cr" ? "flex" : "none", flexDirection:"column", gap:10}}>
+                   style={{display:tab==="cr"?"flex":"none",flexDirection:"column",gap:10}}>
                 <CrPanel ml={crMl} setMl={setCrMl} ap={crAp} setAp={setCrAp}
                          onCopy={showToast} onClear={clearAll}/>
               </div>
             </div>
-            <div style={{
-              padding:"10px var(--pad-card) 12px", borderTop:"1px solid var(--border-soft)",
-              background:"var(--surface-2)", fontSize:11.5, color:"var(--ink-3)", lineHeight:1.6,
-              borderBottomLeftRadius:"var(--r-lg)", borderBottomRightRadius:"var(--r-lg)",
-              display:"flex", alignItems:"center", gap:6,
-            }}>
+            <div className="card-footer-strip">
               <IcShield size={11} aria-hidden="true"/>
               No patient data is stored locally or on servers. Measurements are cleared on page refresh.
             </div>
@@ -1269,15 +1425,18 @@ export default function App() {
       </main>
 
       <footer>
-        <span>Based on the</span>
+        <img src="/logo-color.png" alt="Therapedia" style={{height:20,opacity:.7,verticalAlign:"middle"}}/>
+        <span className="footer-sep" aria-hidden="true">·</span>
+        <span>Pediatric Physical Therapy · Keller &amp; Justin, TX</span>
+        <span className="footer-sep" aria-hidden="true">·</span>
         <a href={CHOA_PDF} target="_blank" rel="noopener noreferrer"
            aria-label="CHOA Plagiocephaly Severity Scale PDF (opens in new tab)">
-          CHOA Plagiocephaly Severity Scale
+          CHOA Severity Scale
         </a>
-        <span aria-hidden="true">·</span>
+        <span className="footer-sep" aria-hidden="true">·</span>
         <span>© 2015 Children's Healthcare of Atlanta · ORTH 961942</span>
-        <span aria-hidden="true">·</span>
-        <span>Privacy: No patient data collected or stored</span>
+        <span className="footer-sep" aria-hidden="true">·</span>
+        <span>No patient data collected</span>
       </footer>
 
       <StickyResult {...sticky} onCopy={showToast}/>
