@@ -167,24 +167,15 @@ const GLOBAL_CSS = `
   }
 
   .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-logo { height: 30px; width: auto; display: block; flex-shrink: 0; }
-  @media (min-width: 600px) { .brand-logo { height: 36px; } }
-  .brand-divider { width: 1px; height: 26px; background: var(--border); flex-shrink: 0; }
-  .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
-  .brand-name {
+  .brand-mark {
+    width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  }
+  .brand-label {
     font-family: var(--font-display);
-    font-size: 14px; font-weight: 700; color: var(--ink);
-    display: flex; align-items: baseline;
+    font-size: 15px; font-weight: 700; color: var(--ink);
+    letter-spacing: -0.01em;
   }
-  @media (min-width: 600px) { .brand-name { font-size: 16px; } }
-  .brand-name .thera  { color: var(--brand-blue); }
-  .brand-name .pedia  { color: var(--brand-orange); font-style: italic; }
-  .brand-name .dot    { color: var(--brand-red); }
-  .brand-meta {
-    font-size: 10px; color: var(--ink-3); font-weight: 700;
-    text-transform: uppercase; letter-spacing: .07em; margin-top: 2px;
-  }
-  @media (min-width: 600px) { .brand-meta { font-size: 11px; } }
 
   .status-pill {
     display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px;
@@ -867,7 +858,7 @@ function fmtTimestamp() {
   return `${n.toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})}    ${n.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true})}`;
 }
 function buildCvaiNote(cvai, sev, rawA, rawB) {
-  return ["PLAGIOCEPHALY ASSESSMENT — Therapedia Physical Therapy", fmtTimestamp(), "",
+  return ["PLAGIOCEPHALY ASSESSMENT", fmtTimestamp(), "",
     `CVAI: ${cvai.toFixed(2)}%`,
     `Severity: Level ${sev.level} — ${sev.label}  (range: ${sev.rangeFull})`, "",
     "Measurements (caliper):",
@@ -882,7 +873,7 @@ function buildCvaiNote(cvai, sev, rawA, rawB) {
 function buildCrNote(cr, res, rawMl, rawAp) {
   const ref = res.key==="ortho" ? "Yes — orthotic evaluation recommended"
             : res.key==="watch" ? "Monitor — reassess at next visit" : "No — within normal range";
-  return ["BRACHYCEPHALY ASSESSMENT — Therapedia Physical Therapy", fmtTimestamp(), "",
+  return ["BRACHYCEPHALY ASSESSMENT", fmtTimestamp(), "",
     `Cephalic Ratio: ${cr.toFixed(1)}%`, `Assessment: ${res.label}  (range: ${res.rangeFull})`, "",
     "Measurements (caliper):",
     `  Medial-Lateral (M/L):     ${parseFloat(rawMl).toFixed(1)} mm`,
@@ -1358,7 +1349,7 @@ export default function App() {
   const toastT = useRef(null);
   const scrolled = useScrolled();
 
-  useEffect(() => { document.title = "Plagiocephaly Assessment — Therapedia PT"; }, []);
+  useEffect(() => { document.title = "Plagiocephaly Assessment Tool"; }, []);
 
   const clearAll = () => { setCvaiA(""); setCvaiB(""); setCrMl(""); setCrAp(""); };
 
@@ -1401,14 +1392,8 @@ export default function App() {
       <header className={`appbar${scrolled ? " is-scrolled" : ""}`}>
         <div className="appbar-inner">
           <div className="brand">
-            <img src="/logo-color.png" alt="Therapedia" className="brand-logo"/>
-            <span className="brand-divider" aria-hidden="true"/>
-            <div className="brand-text">
-              <span className="brand-name" aria-label="Therapedia Plagiocephaly Assessment">
-                <span className="thera">Thera</span><em className="pedia">pedia</em><span className="dot">.</span>
-              </span>
-              <span className="brand-meta">Plagiocephaly · Physical Therapy</span>
-            </div>
+            <span className="brand-mark" aria-hidden="true"/>
+            <span className="brand-label">Plagiocephaly Assessment</span>
           </div>
           <span className="status-pill" aria-label="No patient data stored">
             <IcShield size={12} aria-hidden="true"/>No data stored
@@ -1493,10 +1478,6 @@ export default function App() {
       </main>
 
       <footer>
-        <img src="/logo-color.png" alt="Therapedia" style={{height:18,opacity:.65,verticalAlign:"middle"}}/>
-        <span className="footer-sep" aria-hidden="true">·</span>
-        <span>Pediatric Physical Therapy · Keller &amp; Justin, TX</span>
-        <span className="footer-sep" aria-hidden="true">·</span>
         <a href={CHOA_PDF} target="_blank" rel="noopener noreferrer"
            aria-label="CHOA Severity Scale PDF (opens in new tab)">CHOA Severity Scale</a>
         <span className="footer-sep" aria-hidden="true">·</span>
