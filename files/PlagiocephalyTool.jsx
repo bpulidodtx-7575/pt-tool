@@ -194,69 +194,33 @@ const GLOBAL_CSS = `
     white-space: nowrap;
   }
 
-  /* ── Page layout: mobile-first ────────────────────────────────────────── */
-  /* Mobile: single column, 16px side padding */
+  /* ── Page layout: single-column stacked ─────────────────────────────── */
   .page-wrap {
+    max-width: 900px;
+    margin: 0 auto;
     padding: 16px 16px 80px;
   }
-
-  /* Tablet (600px+): two-column grid, 70/30 */
   @media (min-width: 600px) {
-    .page-wrap {
-      display: grid;
-      grid-template-columns: 1fr minmax(200px, 0.44fr);
-      gap: 20px;
-      padding: 24px 20px 80px;
-      align-items: start;
-    }
+    .page-wrap { padding: 24px 20px 80px; }
   }
-
-  /* Desktop (1000px+): max-width 900px centered, 60/40 */
   @media (min-width: 1000px) {
-    .page-wrap {
-      max-width: 900px;
-      margin: 0 auto;
-      grid-template-columns: 1fr 0.67fr;
-      gap: 28px;
-      padding: 32px 0 96px;
-    }
+    .page-wrap { padding: 32px 0 96px; }
   }
-
-  /* Landscape on phone (short viewports): tighten spacing */
   @media (max-height: 500px) and (orientation: landscape) {
-    .page-wrap { padding-top: 8px; padding-bottom: 60px; gap: 12px; }
+    .page-wrap { padding-top: 8px; padding-bottom: 60px; }
   }
 
-  /* Reference sidebar: flex column on all sizes */
+  /* Reference section stacks below calculator */
   .ref-col {
     display: flex; flex-direction: column; gap: var(--gap-stack);
-    min-width: 0;
+    margin-top: var(--gap-stack);
   }
 
-  /* On tablet+: sticky sidebar */
-  @media (min-width: 600px) {
-    .ref-col {
-      position: sticky;
-      top: calc(var(--appbar-h) + 12px);
-      max-height: calc(100vh - var(--appbar-h) - 24px);
-      overflow-y: auto;
-      /* subtle scroll indicator */
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
-    }
-  }
-
-  /* Guide sidebar card: hidden on mobile (guide is inline/collapsible inside calculator) */
+  /* Guide sidebar card always hidden — guide lives inline inside calculator */
   .guide-sidebar-card { display: none !important; }
-  @media (min-width: 600px) {
-    .guide-sidebar-card { display: block !important; }
-  }
 
-  /* Inline guide (mobile): hidden on tablet+ */
+  /* Inline guide always visible */
   .inline-guide { display: block; }
-  @media (min-width: 600px) {
-    .inline-guide { display: none !important; }
-  }
 
   /* ── Cards ────────────────────────────────────────────────────────────── */
   .card {
