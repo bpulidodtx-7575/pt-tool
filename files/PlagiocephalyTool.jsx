@@ -1,9 +1,9 @@
 // CHOA Plagiocephaly Assessment Tool — Therapedia Edition
 // CVAI formula: |A−B| / max(A,B) × 100  (official CHOA formula)
-// No patient data stored or transmitted. Reference tool only.
+// Responsive: mobile-first (600px tablet, 1000px desktop)
+// Touch targets: ≥48px on all interactive elements
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
-// Therapedia fonts: Bitter (display) + Nunito Sans (body) + JetBrains Mono (numbers)
 if (typeof document !== "undefined") {
   [
     { rel:"preconnect", href:"https://fonts.googleapis.com" },
@@ -18,16 +18,9 @@ if (typeof document !== "undefined") {
   });
 }
 
-// ─── Therapedia Design System tokens ─────────────────────────────────────────
-// Palette sampled directly from the Therapedia logo:
-//   Thera blue   #0070BD — PT service color (this tool's primary)
-//   Pedia orange #F08218 — CTA / action color
-//   Red dot      #E11E15 — wordmark dot / emphasis
-//   Cream bg     #FBF7F0 — warm off-white page
 const GLOBAL_CSS = `
-  /* ── Therapedia Design System tokens ──────────────────────────────────── */
+  /* ── Therapedia Design System tokens ─────────────────────────────────── */
   :root {
-    /* Brand */
     --brand-blue:        #0070BD;
     --brand-blue-deep:   #00538C;
     --brand-blue-soft:   #D6EAF6;
@@ -38,12 +31,10 @@ const GLOBAL_CSS = `
     --brand-red-deep:    #B0140E;
     --brand-red-soft:    #FBD9D7;
 
-    /* Fonts */
     --font-display: "Bookman Old Style","Bookman","Bitter",Georgia,"Times New Roman",serif;
     --font-sans:    "Nunito Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     --font-mono:    "JetBrains Mono",ui-monospace,Menlo,monospace;
 
-    /* Neutrals (warm-cool blend) */
     --ink-900: #0E1B2B;
     --ink-700: #1F2F40;
     --ink-500: #4A5A6B;
@@ -51,13 +42,10 @@ const GLOBAL_CSS = `
     --ink-200: #C3CCD3;
     --ink-100: #E3E8EC;
 
-    /* Page surfaces */
-    --bg:        #FBF7F0;   /* cream — Therapedia default */
-    --surface:   #FFFFFF;   /* paper */
-    --surface-2: #F5EFE4;   /* warm tint */
+    --bg:        #FBF7F0;
+    --surface:   #FFFFFF;
+    --surface-2: #F5EFE4;
     --surface-3: #EDE4D4;
-
-    /* Semantic */
     --border:      var(--ink-200);
     --border-soft: var(--ink-100);
     --ink:   var(--ink-900);
@@ -65,86 +53,69 @@ const GLOBAL_CSS = `
     --ink-3: var(--ink-500);
     --ink-4: var(--ink-300);
 
-    /* Accent = PT service blue (Physical Therapy — the discipline for plagiocephaly) */
-    --accent:       var(--brand-blue);
-    --accent-soft:  var(--brand-blue-soft);
-    --accent-strong:var(--brand-blue-deep);
-    --accent-ink:   #003A70;
+    --accent:        var(--brand-blue);
+    --accent-soft:   var(--brand-blue-soft);
+    --accent-strong: var(--brand-blue-deep);
+    --accent-ink:    #003A70;
+    --cta:           var(--brand-orange);
+    --cta-soft:      var(--brand-orange-soft);
+    --cta-strong:    var(--brand-orange-deep);
 
-    /* CTA = Therapedia orange */
-    --cta:          var(--brand-orange);
-    --cta-soft:     var(--brand-orange-soft);
-    --cta-strong:   var(--brand-orange-deep);
-
-    /* Clinical severity colors (medical reference — not brand) */
     --sev-1: #2E9D5B;
     --sev-2: #8a7200;
     --sev-3: #C7670C;
     --sev-4: #c04020;
     --sev-5: #B0140E;
 
-    /* Shadows (warm-neutral per Therapedia system) */
     --shadow-card: 0 4px 12px rgba(14,27,43,.07), 0 2px 4px rgba(14,27,43,.04);
     --shadow-pop:  0 12px 28px rgba(14,27,43,.10), 0 4px 8px rgba(14,27,43,.05);
-
-    /* Focus — 3px blue ring (WCAG AAA, clinical-first) */
     --focus: 0 0 0 3px rgba(0,112,189,.25), 0 0 0 1.5px rgba(0,112,189,.6);
 
-    /* Radii */
-    --r-xs:  4px;
-    --r-sm:  8px;
-    --r-md:  12px;
-    --r-lg:  20px;
-    --r-pill:999px;
+    --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 20px; --r-pill: 999px;
+    --pad-card:  24px;
+    --gap-stack: 16px;
 
-    /* Card padding + gap */
-    --pad-card:  28px;
-    --gap-stack: 20px;
+    /* appbar height used for sticky sidebar offset */
+    --appbar-h: 58px;
   }
 
-  /* ── Dark mode — unofficial Therapedia dark ──────────────────────────── */
+  @media (min-width: 600px) {
+    :root { --pad-card: 28px; --gap-stack: 20px; }
+  }
+
+  /* ── Dark mode ─────────────────────────────────────────────────────────── */
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg:        #080F1A;
-      --surface:   #0C1625;
-      --surface-2: #11203A;
-      --surface-3: #172A4A;
-      --border:      #1E3050;
-      --border-soft: #162540;
-      --ink:   #EBF0F5;
-      --ink-2: #C8D4DD;
-      --ink-3: #7A8F9E;
-      --ink-4: #4A5E6E;
-      --accent:       #3EA7E8;
-      --accent-soft:  #0A2540;
-      --accent-strong:#61BCE8;
-      --accent-ink:   #A8D8F5;
-      --cta:          #F08218;
-      --cta-soft:     #3A1E00;
-      --cta-strong:   #FFB460;
-      --sev-1: #5ecc80; --sev-2: #d4b800;
-      --sev-3: #E08820; --sev-4: #e06040; --sev-5: #d04030;
+      --bg:        #080F1A;  --surface:   #0C1625;
+      --surface-2: #11203A;  --surface-3: #172A4A;
+      --border:      #1E3050;  --border-soft: #162540;
+      --ink:   #EBF0F5;  --ink-2: #C8D4DD;
+      --ink-3: #7A8F9E;  --ink-4: #4A5E6E;
+      --accent:        #3EA7E8;  --accent-soft:  #0A2540;
+      --accent-strong: #61BCE8;  --accent-ink:   #A8D8F5;
+      --cta:           #F08218;  --cta-soft:     #3A1E00;  --cta-strong: #FFB460;
+      --sev-1:#5ecc80; --sev-2:#d4b800; --sev-3:#E08820; --sev-4:#e06040; --sev-5:#d04030;
       --shadow-card: 0 4px 12px rgba(0,0,0,.40), 0 2px 4px rgba(0,0,0,.30);
       --shadow-pop:  0 12px 28px rgba(0,0,0,.55), 0 4px 8px rgba(0,0,0,.35);
       --focus: 0 0 0 3px rgba(62,167,232,.30), 0 0 0 1.5px rgba(62,167,232,.55);
     }
   }
 
-  /* ── Resets ──────────────────────────────────────────────────────────── */
+  /* ── Resets ───────────────────────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { overflow-x: hidden; }
 
   html, body {
     background: var(--bg);
     color: var(--ink-2);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    font-feature-settings: "kern","liga";
   }
 
-  /* Headings use Bitter (Therapedia display face) */
   h1, h2, h3 {
     font-family: var(--font-display);
     font-weight: 600;
@@ -159,168 +130,254 @@ const GLOBAL_CSS = `
   a:focus-visible { outline: none; box-shadow: var(--focus); border-radius: 3px; }
   ::selection { background: color-mix(in srgb, var(--accent) 20%, transparent); }
 
-  /* ── Skip nav ────────────────────────────────────────────────────────── */
+  /* ── Skip nav ─────────────────────────────────────────────────────────── */
   .skip-nav {
     position: absolute; left: -9999px; top: 8px; z-index: 999;
-    padding: 8px 14px; background: var(--ink); color: var(--bg);
-    border-radius: var(--r-sm); font-weight: 700; font-size: 13px;
+    padding: 10px 16px; background: var(--ink); color: var(--bg);
+    border-radius: var(--r-sm); font-weight: 700; font-size: 14px;
   }
   .skip-nav:focus { left: 8px; outline: none; box-shadow: var(--focus); }
 
-  /* ── App bar ─────────────────────────────────────────────────────────── */
+  /* ── App bar ──────────────────────────────────────────────────────────── */
   .appbar {
     position: sticky; top: 0; z-index: 50;
     background: color-mix(in srgb, var(--bg) 88%, transparent);
     backdrop-filter: saturate(180%) blur(12px);
     -webkit-backdrop-filter: saturate(180%) blur(12px);
     border-bottom: 1px solid var(--border-soft);
-    transition: box-shadow 200ms;
   }
   .appbar.is-scrolled { box-shadow: var(--shadow-card); }
   .appbar-inner {
-    max-width: 1200px; margin: 0 auto; padding: 12px 32px;
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    max-width: 900px; margin: 0 auto;
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  @media (min-width: 600px) {
+    .appbar-inner { padding: 12px 20px; }
+  }
+  @media (min-width: 1000px) {
+    .appbar-inner { padding: 12px 0; }
   }
 
-  /* Therapedia wordmark treatment */
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand-logo {
-    height: 36px; width: auto; display: block;
-    flex-shrink: 0;
-  }
-  .brand-divider {
-    width: 1px; height: 28px; background: var(--border); flex-shrink: 0;
-  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-logo { height: 30px; width: auto; display: block; flex-shrink: 0; }
+  @media (min-width: 600px) { .brand-logo { height: 36px; } }
+  .brand-divider { width: 1px; height: 26px; background: var(--border); flex-shrink: 0; }
   .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
   .brand-name {
     font-family: var(--font-display);
-    font-size: 15px; font-weight: 700;
-    color: var(--ink); letter-spacing: -.01em;
-    display: flex; align-items: baseline; gap: 0;
+    font-size: 14px; font-weight: 700; color: var(--ink);
+    display: flex; align-items: baseline;
   }
+  @media (min-width: 600px) { .brand-name { font-size: 16px; } }
   .brand-name .thera  { color: var(--brand-blue); }
   .brand-name .pedia  { color: var(--brand-orange); font-style: italic; }
   .brand-name .dot    { color: var(--brand-red); }
-  .brand-meta { font-size: 11px; color: var(--ink-3); font-weight: 600; text-transform: uppercase; letter-spacing: .07em; margin-top: 2px; }
+  .brand-meta {
+    font-size: 10px; color: var(--ink-3); font-weight: 700;
+    text-transform: uppercase; letter-spacing: .07em; margin-top: 2px;
+  }
+  @media (min-width: 600px) { .brand-meta { font-size: 11px; } }
 
   .status-pill {
-    display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
+    display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px;
     border-radius: var(--r-pill); background: var(--surface-2);
     border: 1px solid var(--border-soft);
-    font-size: 11.5px; color: var(--ink-3); font-weight: 600;
+    font-size: 11px; color: var(--ink-3); font-weight: 700;
+    white-space: nowrap;
   }
 
-  /* ── Main layout ─────────────────────────────────────────────────────── */
-  main {
-    max-width: 1200px; margin: 0 auto; padding: 36px 32px 96px;
-    display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr);
-    gap: 32px; align-items: start;
+  /* ── Page layout: mobile-first ────────────────────────────────────────── */
+  /* Mobile: single column, 16px side padding */
+  .page-wrap {
+    padding: 16px 16px 80px;
   }
-  @media (max-width: 960px) { main { grid-template-columns:1fr; padding:24px 20px 96px; gap:24px; } }
-  .col-stack { display: flex; flex-direction: column; gap: var(--gap-stack); min-width: 0; }
 
-  /* ── Cards ───────────────────────────────────────────────────────────── */
+  /* Tablet (600px+): two-column grid, 70/30 */
+  @media (min-width: 600px) {
+    .page-wrap {
+      display: grid;
+      grid-template-columns: 1fr minmax(200px, 0.44fr);
+      gap: 20px;
+      padding: 24px 20px 80px;
+      align-items: start;
+    }
+  }
+
+  /* Desktop (1000px+): max-width 900px centered, 60/40 */
+  @media (min-width: 1000px) {
+    .page-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      grid-template-columns: 1fr 0.67fr;
+      gap: 28px;
+      padding: 32px 0 96px;
+    }
+  }
+
+  /* Landscape on phone (short viewports): tighten spacing */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .page-wrap { padding-top: 8px; padding-bottom: 60px; gap: 12px; }
+  }
+
+  /* Reference sidebar: flex column on all sizes */
+  .ref-col {
+    display: flex; flex-direction: column; gap: var(--gap-stack);
+    min-width: 0;
+  }
+
+  /* On tablet+: sticky sidebar */
+  @media (min-width: 600px) {
+    .ref-col {
+      position: sticky;
+      top: calc(var(--appbar-h) + 12px);
+      max-height: calc(100vh - var(--appbar-h) - 24px);
+      overflow-y: auto;
+      /* subtle scroll indicator */
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+  }
+
+  /* Guide sidebar card: hidden on mobile (guide is inline/collapsible inside calculator) */
+  .guide-sidebar-card { display: none !important; }
+  @media (min-width: 600px) {
+    .guide-sidebar-card { display: block !important; }
+  }
+
+  /* Inline guide (mobile): hidden on tablet+ */
+  .inline-guide { display: block; }
+  @media (min-width: 600px) {
+    .inline-guide { display: none !important; }
+  }
+
+  /* ── Cards ────────────────────────────────────────────────────────────── */
   .card {
     background: var(--surface);
     border: 1px solid var(--border-soft);
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-card);
+    min-width: 0;
   }
   .card-pad { padding: var(--pad-card); }
   .card-head {
-    padding: 22px var(--pad-card) 16px;
-    display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+    padding: 20px var(--pad-card) 14px;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
   }
   .card-title {
     font-family: var(--font-display);
-    font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: -.01em;
+    font-size: 16px; font-weight: 700; color: var(--ink);
   }
-  .card-meta { font-size: 11.5px; color: var(--ink-3); font-weight: 600; font-family: var(--font-mono); }
+  @media (min-width: 600px) { .card-title { font-size: 17px; } }
+  .card-meta { font-size: 11px; color: var(--ink-3); font-weight: 600; font-family: var(--font-mono); }
   .card-head-flex {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; flex-wrap: wrap;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap;
   }
   .eyebrow {
-    font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+    font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
     font-weight: 700; color: var(--ink-3);
   }
 
-  /* ── Segmented tab switcher ──────────────────────────────────────────── */
+  /* ── Segmented tab switcher ───────────────────────────────────────────── */
   .modeswitch {
-    display: inline-grid; grid-template-columns: 1fr 1fr;
+    display: grid; grid-template-columns: 1fr 1fr;
     background: var(--surface-2);
     border: 1px solid var(--border-soft);
     border-radius: var(--r-pill); padding: 4px;
-    width: 100%; max-width: 460px;
+    width: 100%;
   }
+  /* Touch target: each tab must be ≥48px */
   .modeswitch button {
     background: transparent; border: none; cursor: pointer;
-    border-radius: var(--r-pill); padding: 10px 16px;
-    font-size: 13px; font-weight: 700; color: var(--ink-3);
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    border-radius: var(--r-pill);
+    padding: 0 12px;
+    min-height: 48px;
+    font-size: 14px; font-weight: 700; color: var(--ink-3);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
     touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     font-family: var(--font-sans);
     transition: background 150ms, color 150ms, box-shadow 150ms;
   }
   .modeswitch button .sub {
-    font-size: 10px; font-weight: 700; color: var(--ink-4);
-    letter-spacing: .06em; text-transform: uppercase;
+    font-size: 9px; font-weight: 700; color: var(--ink-4);
+    letter-spacing: .07em; text-transform: uppercase;
   }
   .modeswitch button[aria-selected="true"] {
     background: var(--surface); color: var(--ink);
-    box-shadow: 0 1px 4px rgba(14,27,43,.10), 0 1px 1px rgba(14,27,43,.06);
+    box-shadow: 0 1px 4px rgba(14,27,43,.10);
   }
   .modeswitch button[aria-selected="true"] .sub { color: var(--accent); }
   .modeswitch button:focus-visible { outline: none; box-shadow: var(--focus); }
-  @media (hover: none) and (pointer: coarse) { .modeswitch button { padding: 14px 16px; } }
 
-  /* ── Formula chip ────────────────────────────────────────────────────── */
+  /* ── Formula chip ─────────────────────────────────────────────────────── */
   .formula-chip {
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 7px 12px 7px 10px;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 10px 6px 9px;
     background: var(--accent-soft);
     border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-soft));
     border-radius: var(--r-sm);
-    font-family: var(--font-mono); font-size: 12.5px;
+    font-family: var(--font-mono); font-size: 11px;
     color: var(--accent-ink); font-weight: 500;
+    white-space: nowrap;
   }
   .formula-chip .label {
-    font-family: var(--font-sans); font-size: 10px; font-weight: 800;
+    font-family: var(--font-sans); font-size: 9px; font-weight: 800;
     text-transform: uppercase; letter-spacing: .1em;
-    color: color-mix(in srgb, var(--accent-ink) 65%, transparent);
+    color: color-mix(in srgb, var(--accent-ink) 60%, transparent);
   }
 
-  /* ── Inputs ──────────────────────────────────────────────────────────── */
-  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 480px) { .input-grid { grid-template-columns: 1fr; gap: 12px; } }
+  /* ── Inputs — touch-friendly ─────────────────────────────────────────── */
+  /* Mobile: 1 column  |  Tablet+: 2 columns */
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  @media (min-width: 600px) {
+    .input-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+  }
+  /* Landscape phone: 2 columns even on mobile */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .input-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  }
 
-  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
   .field-label {
     display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-    font-size: 13px; font-weight: 700; color: var(--ink-2);
+    font-size: 14px; font-weight: 700; color: var(--ink-2);
   }
-  .field-label .hint { font-size: 11.5px; font-weight: 600; color: var(--ink-3); }
+  .field-label .hint { font-size: 12px; font-weight: 600; color: var(--ink-3); }
   .field-label .swatch {
     width: 8px; height: 8px; border-radius: 3px;
-    display: inline-block; vertical-align: middle; margin-right: 6px;
+    display: inline-block; vertical-align: middle; margin-right: 5px;
   }
   .field-range {
-    font-size: 11.5px; color: var(--ink-4);
+    font-size: 12px; color: var(--ink-4);
     font-family: var(--font-mono); font-weight: 500;
   }
   .field-warning {
-    font-size: 12px; color: var(--sev-3); font-weight: 700; line-height: 1.4; margin-top: 2px;
+    font-size: 12px; color: var(--sev-3); font-weight: 700; line-height: 1.4;
   }
 
   .input-wrap { position: relative; }
   .input-wrap input {
-    width: 100%; padding: 13px 44px 13px 14px;
-    font-family: var(--font-mono); font-size: 18px; font-weight: 600;
+    width: 100%;
+    /* 16px font-size prevents iOS Safari auto-zoom on focus */
+    font-size: 16px;
+    padding: 14px 46px 14px 14px;
+    font-family: var(--font-mono); font-weight: 600;
     color: var(--ink); background: var(--surface);
-    border: 1.5px solid var(--border); border-radius: var(--r-md);
-    outline: none; min-height: 50px; font-variant-numeric: tabular-nums;
+    border: 2px solid var(--border); border-radius: var(--r-md);
+    outline: none;
+    /* ≥48px touch target */
+    min-height: 52px;
+    font-variant-numeric: tabular-nums;
     -moz-appearance: textfield;
     transition: border-color 150ms, box-shadow 150ms;
+  }
+  @media (min-width: 600px) {
+    .input-wrap input { font-size: 18px; min-height: 52px; }
   }
   .input-wrap input::-webkit-inner-spin-button,
   .input-wrap input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -329,196 +386,230 @@ const GLOBAL_CSS = `
   .input-wrap input:focus-visible {
     border-color: var(--accent);
     box-shadow: var(--focus);
-    outline: none;
   }
   .input-wrap .unit {
     position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
     font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);
     pointer-events: none; font-weight: 600;
   }
-  @media (hover: none) and (pointer: coarse) {
-    .input-wrap input { min-height: 56px; font-size: 19px; padding: 15px 46px 15px 16px; }
+
+  /* ── Measurement guide ────────────────────────────────────────────────── */
+  /* Inline guide toggle (mobile): full-width, ≥48px */
+  .guide-toggle {
+    width: 100%;
+    min-height: 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border-soft);
+    border-radius: var(--r-md);
+    font-size: 14px; font-weight: 700; color: var(--ink-2);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    touch-action: manipulation;
+    transition: background 150ms, border-color 150ms;
+  }
+  .guide-toggle:hover { background: var(--surface-3); border-color: var(--accent); }
+  .guide-toggle:focus-visible { outline: none; box-shadow: var(--focus); }
+  .guide-toggle .chev { color: var(--ink-3); flex-shrink: 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    .guide-toggle .chev { transition: transform 200ms; }
+  }
+  .guide-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+
+  .guide-body {
+    border: 1px solid var(--border-soft);
+    border-radius: 0 0 var(--r-md) var(--r-md);
+    overflow: hidden;
   }
 
-  /* ── Measurement hint ────────────────────────────────────────────────── */
+  /* Diagram frame — used in both inline and sidebar */
+  .diagram-frame {
+    display: flex; justify-content: center; align-items: center;
+    padding: 18px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .diagram-frame svg { width: 100%; max-width: 260px; height: auto; }
+
   .measure-note {
     font-size: 13px; color: var(--ink-3); line-height: 1.55;
-    background: var(--surface-2);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--r-sm); padding: 10px 13px;
+    padding: 10px 14px;
     display: flex; align-items: flex-start; gap: 8px;
   }
 
-  /* ── Diagrams ────────────────────────────────────────────────────────── */
-  .diagram-frame {
-    display: flex; justify-content: center; align-items: center;
-    padding: 20px; background: var(--surface-2);
-    border: 1px solid var(--border-soft); border-radius: var(--r-md);
-  }
-  .diagram-frame svg { width: 100%; max-width: 280px; height: auto; }
-
-  /* ── Result card ─────────────────────────────────────────────────────── */
+  /* ── Result card ──────────────────────────────────────────────────────── */
   .result-empty {
-    margin-top: 4px; padding: 28px 20px; text-align: center;
+    padding: 24px 16px; text-align: center;
     border: 1.5px dashed var(--border); border-radius: var(--r-md);
     background: var(--surface-2); color: var(--ink-3);
-    font-size: 13.5px; font-weight: 500;
+    font-size: 14px; font-weight: 500;
   }
 
   .result {
-    margin-top: 6px;
     border: 1px solid var(--border-soft);
     border-radius: var(--r-lg);
     background: var(--surface);
     box-shadow: var(--shadow-card);
     position: relative; overflow: hidden;
-    transition: box-shadow 200ms;
   }
-  .result:hover { box-shadow: var(--shadow-pop); }
   .result::before {
     content:""; position:absolute; left:0; top:0; bottom:0; width:5px;
     background:var(--sev-color, var(--accent));
   }
 
-  .result-head { padding:22px 22px 18px; display:flex; flex-direction:column; gap:6px; }
+  .result-head { padding: 18px 18px 14px; display:flex; flex-direction:column; gap:5px; }
+  @media (min-width: 600px) { .result-head { padding: 20px 22px 16px; } }
+
   .result-eyebrow-row {
-    display:flex; align-items:center; gap:10px; font-size:11px;
+    display:flex; align-items:center; gap:8px; font-size:10px;
     text-transform:uppercase; letter-spacing:.09em; font-weight:700; color:var(--ink-3);
   }
   .result-eyebrow-row .sev-dot {
-    width:8px; height:8px; border-radius:50%; background:var(--sev-color); display:inline-block;
+    width:7px; height:7px; border-radius:50%; background:var(--sev-color); display:inline-block; flex-shrink:0;
   }
   .result-eyebrow-row .sev-label { color:var(--ink-2); }
 
-  .result-number { display:flex; align-items:baseline; gap:12px; margin-top:4px; }
+  .result-number { display:flex; align-items:baseline; gap:10px; margin-top:2px; flex-wrap:wrap; }
   .result-number .value {
-    font-family:var(--font-mono); font-size:56px; font-weight:600;
+    font-family:var(--font-mono); font-size:48px; font-weight:600;
     letter-spacing:-.03em; color:var(--ink); line-height:1;
     font-variant-numeric:tabular-nums;
   }
+  @media (min-width: 600px) { .result-number .value { font-size: 56px; } }
   .result-number .pct {
-    font-family:var(--font-mono); font-size:28px; font-weight:400; color:var(--ink-3); line-height:1;
+    font-family:var(--font-mono); font-size:24px; font-weight:400; color:var(--ink-3); line-height:1;
   }
   .result-number .range {
-    margin-left:auto; font-family:var(--font-mono); font-size:12px;
+    margin-left:auto; font-family:var(--font-mono); font-size:11px;
     color:var(--ink-3); text-align:right; line-height:1.4;
   }
   .result-number .range strong {
-    display:block; font-size:13px; color:var(--ink);
-    font-family:var(--font-display); font-weight:700; letter-spacing:-.01em;
+    display:block; font-size:12px; color:var(--ink);
+    font-family:var(--font-display); font-weight:700;
   }
 
   .result-body {
-    padding:16px 22px 22px; border-top:1px solid var(--border-soft);
-    display:flex; flex-direction:column; gap:14px;
+    padding: 14px 18px 18px; border-top:1px solid var(--border-soft);
+    display:flex; flex-direction:column; gap:12px;
   }
-  .result-section { display:flex; flex-direction:column; gap:5px; }
+  @media (min-width: 600px) { .result-body { padding: 16px 22px 20px; } }
+
+  .result-section { display:flex; flex-direction:column; gap:4px; }
   .result-section h3 {
-    font-size:10.5px; text-transform:uppercase; letter-spacing:.1em;
+    font-size:10px; text-transform:uppercase; letter-spacing:.1em;
     color:var(--ink-3); font-weight:700; font-family:var(--font-sans);
   }
   .result-section p  { font-size:14px; color:var(--ink-2); line-height:1.6; }
   .result-section ul {
-    list-style:none; display:flex; flex-direction:column; gap:4px;
-    font-size:13.5px; color:var(--ink-2); line-height:1.55;
+    list-style:none; display:flex; flex-direction:column; gap:3px;
+    font-size:13px; color:var(--ink-2); line-height:1.55;
   }
-  .result-section li { position:relative; padding-left:14px; }
+  .result-section li { position:relative; padding-left:13px; }
   .result-section li::before {
-    content:""; position:absolute; left:0; top:9px;
+    content:""; position:absolute; left:0; top:8px;
     width:4px; height:4px; background:var(--ink-4); border-radius:50%;
   }
 
+  /* Result actions: stacked (full-width) on mobile, row on tablet+ */
   .result-actions {
-    display:flex; gap:10px; padding:14px 22px;
-    background:var(--surface-2); border-top:1px solid var(--border-soft);
+    display:flex; flex-direction:column; gap:8px;
+    padding: 12px 14px; border-top:1px solid var(--border-soft);
+    background:var(--surface-2);
     border-radius:0 0 var(--r-lg) var(--r-lg);
-    justify-content:flex-end;
   }
-  @media (max-width: 480px) {
-    .result-actions { flex-direction:column-reverse; }
-    .result-actions > * { width:100%; justify-content:center; }
+  @media (min-width: 600px) {
+    .result-actions {
+      flex-direction:row; gap:10px; justify-content:flex-end;
+      padding: 12px 22px;
+    }
   }
+  .result-actions .btn { width: 100%; justify-content: center; }
+  @media (min-width: 600px) { .result-actions .btn { width: auto; } }
 
-  /* ── Buttons ─────────────────────────────────────────────────────────── */
+  /* ── Buttons — touch-friendly (≥48px all sizes) ───────────────────────── */
   .btn {
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    padding:10px 20px; border-radius:var(--r-pill);
-    font-size:13.5px; font-weight:700; font-family:var(--font-sans);
+    padding: 0 20px;
+    /* ≥48px touch target — enforced always, not just on touch devices */
+    min-height: 48px;
+    border-radius:var(--r-pill);
+    font-size:14px; font-weight:700; font-family:var(--font-sans);
     cursor:pointer; border:none; line-height:1;
     touch-action:manipulation; -webkit-tap-highlight-color:transparent;
-    min-height:42px; white-space:nowrap;
+    white-space:nowrap;
     transition: background 150ms, color 150ms, box-shadow 150ms, transform 100ms;
   }
   .btn:focus-visible { outline:none; box-shadow:var(--focus); }
   .btn:active { transform:scale(.98); }
+
   .btn-primary {
     background:var(--cta); color:#fff;
-    box-shadow: 0 4px 14px -4px rgba(240,130,24,.50);
+    box-shadow: 0 3px 12px -3px rgba(240,130,24,.50);
   }
   .btn-primary:hover {
     background:var(--cta-strong);
-    box-shadow: 0 6px 20px -4px rgba(240,130,24,.55);
+    box-shadow: 0 5px 18px -3px rgba(240,130,24,.55);
     transform: translateY(-1px);
   }
   .btn-primary:active { transform:scale(.98); box-shadow:none; }
   .btn-primary.copied { background:var(--sev-1); box-shadow:none; }
+
   .btn-ghost {
     background:var(--surface); color:var(--ink-2);
-    border:1.5px solid var(--border); box-shadow:var(--sh-1);
+    border:1.5px solid var(--border);
   }
-  .btn-ghost:hover {
-    background:var(--surface-2); border-color:var(--accent); color:var(--ink);
-    transform: translateY(-1px);
-  }
+  .btn-ghost:hover { background:var(--surface-2); border-color:var(--accent); color:var(--ink); transform:translateY(-1px); }
   .btn-ghost:active { transform:scale(.98); }
-  @media (hover: none) and (pointer: coarse) { .btn { min-height:48px; padding:13px 20px; } }
 
-  /* ── Alert ───────────────────────────────────────────────────────────── */
+  /* ── Alert ────────────────────────────────────────────────────────────── */
   .alert {
-    margin-top:4px; padding:12px 16px; border-radius:var(--r-md);
+    padding:12px 14px; border-radius:var(--r-md);
     background:color-mix(in srgb,var(--sev-3) 8%,var(--surface));
     border:1px solid color-mix(in srgb,var(--sev-3) 28%,var(--border));
-    color:var(--sev-4); font-size:13.5px; font-weight:600;
+    color:var(--sev-4); font-size:14px; font-weight:600;
     display:flex; align-items:flex-start; gap:10px;
   }
 
-  /* ── Severity reference table ────────────────────────────────────────── */
-  .table-scroll { overflow-x:auto; }
+  /* ── Severity table ───────────────────────────────────────────────────── */
+  .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .table-scroll:focus-visible { outline:none; box-shadow:var(--focus); }
-  .sev-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .sev-table { width:100%; border-collapse:collapse; font-size:12px; }
+  @media (min-width: 600px) { .sev-table { font-size: 13px; } }
   .sev-table th {
     text-align:left; font-size:10px; text-transform:uppercase;
     letter-spacing:.1em; font-weight:700; color:var(--ink-3);
-    padding:10px 14px; background:var(--surface-2);
+    padding:8px 12px; background:var(--surface-2);
     border-bottom:1px solid var(--border-soft);
-    font-family:var(--font-sans);
+    white-space:nowrap;
   }
   .sev-table th:first-child { padding-left:var(--pad-card); }
   .sev-table th:last-child  { padding-right:var(--pad-card); }
-  .sev-table td { padding:13px 14px; vertical-align:top; border-bottom:1px solid var(--border-soft); }
+  .sev-table td { padding:11px 12px; vertical-align:top; border-bottom:1px solid var(--border-soft); }
   .sev-table td:first-child { padding-left:var(--pad-card); }
   .sev-table td:last-child  { padding-right:var(--pad-card); }
   .sev-table tr:last-child td { border-bottom:none; }
   .sev-table tr:hover td { background:color-mix(in srgb,var(--surface-2) 55%,var(--surface)); }
   .sev-table .level-num {
-    display:inline-flex; align-items:center; gap:8px;
-    font-family:var(--font-mono); font-size:13px; font-weight:600; color:var(--ink);
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--ink);
   }
-  .sev-table .level-num .bar { width:3px; height:16px; background:var(--sev-color); border-radius:2px; }
+  .sev-table .level-num .bar { width:3px; height:15px; background:var(--sev-color); border-radius:2px; }
   .sev-table .range-cell {
-    font-family:var(--font-mono); font-size:13px; color:var(--ink-2);
-    font-variant-numeric:tabular-nums; white-space:nowrap; width:110px;
+    font-family:var(--font-mono); color:var(--ink-2);
+    font-variant-numeric:tabular-nums; white-space:nowrap; width:90px;
   }
   .sev-table .pres-cell ul {
-    list-style:none; font-size:12.5px; color:var(--ink-2);
-    line-height:1.5; display:flex; flex-direction:column; gap:2px;
+    list-style:none; color:var(--ink-2);
+    line-height:1.45; display:flex; flex-direction:column; gap:2px;
   }
-  .sev-table .rec-cell { font-size:12.5px; color:var(--ink-2); line-height:1.55; }
+  .sev-table .rec-cell { color:var(--ink-2); line-height:1.5; }
 
-  /* ── Accordion ───────────────────────────────────────────────────────── */
+  /* ── Accordion (age guidelines) ───────────────────────────────────────── */
   .accordion-toggle {
     width:100%; background:transparent; border:none; cursor:pointer;
-    padding:20px var(--pad-card);
+    padding: 18px var(--pad-card);
+    min-height: 48px;
     display:flex; align-items:center; justify-content:space-between;
     text-align:left; font-family:var(--font-sans);
     border-radius:var(--r-lg);
@@ -526,7 +617,7 @@ const GLOBAL_CSS = `
   }
   .accordion-toggle:hover { background:var(--surface-2); }
   .accordion-toggle:focus-visible { outline:none; box-shadow:inset 0 0 0 2px var(--accent); border-radius:var(--r-lg); }
-  .accordion-toggle .chev { color:var(--ink-3); }
+  .accordion-toggle .chev { color:var(--ink-3); flex-shrink:0; }
   @media (prefers-reduced-motion: no-preference) {
     .accordion-toggle .chev { transition:transform 200ms; }
   }
@@ -536,60 +627,62 @@ const GLOBAL_CSS = `
   .accordion-body {
     padding:0 var(--pad-card) var(--pad-card);
     border-top:1px solid var(--border-soft);
-    display:flex; flex-direction:column; gap:16px;
+    display:flex; flex-direction:column; gap:14px;
   }
-  .age-block { display:grid; grid-template-columns:140px 1fr; gap:18px; padding-top:18px; }
-  @media (max-width: 600px) { .age-block { grid-template-columns:1fr; gap:6px; } }
+  .age-block { display:grid; grid-template-columns:130px 1fr; gap:16px; padding-top:14px; }
+  @media (max-width: 599px) { .age-block { grid-template-columns:1fr; gap:5px; } }
   .age-tag {
-    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.09em;
-    color:var(--ink-3); display:flex; align-items:flex-start; gap:8px; padding-top:2px;
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--ink-3); display:flex; align-items:flex-start; gap:7px; padding-top:2px;
   }
-  .age-tag .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:4px; flex-shrink:0; }
-  .age-content { font-size:13.5px; color:var(--ink-2); line-height:1.6; display:flex; flex-direction:column; gap:10px; }
+  .age-tag .dot { width:7px; height:7px; border-radius:50%; background:var(--accent); margin-top:3px; flex-shrink:0; }
+  .age-content { font-size:13px; color:var(--ink-2); line-height:1.6; display:flex; flex-direction:column; gap:8px; }
   .age-content strong { color:var(--ink); font-weight:700; }
-  .age-content ul { list-style:none; display:flex; flex-direction:column; gap:6px; margin-top:2px; }
-  .age-content li { position:relative; padding-left:14px; }
+  .age-content ul { list-style:none; display:flex; flex-direction:column; gap:5px; }
+  .age-content li { position:relative; padding-left:13px; }
   .age-content li::before {
-    content:""; position:absolute; left:0; top:9px;
-    width:4px; height:4px; background:var(--ink-4); border-radius:50%;
-  }
-  .cond-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:4px; }
-  @media (max-width: 600px) { .cond-grid { grid-template-columns:1fr; } }
-  .cond-card {
-    border:1px solid var(--border-soft); border-radius:var(--r-md);
-    padding:14px 16px; background:var(--surface-2);
-  }
-  .cond-card h5 { font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:8px; }
-  .cond-card .eyebrow { margin-top:10px; margin-bottom:4px; }
-  .cond-card ul { list-style:none; display:flex; flex-direction:column; gap:4px; }
-  .cond-card li { font-size:12.5px; color:var(--ink-2); padding-left:14px; position:relative; }
-  .cond-card li::before {
     content:""; position:absolute; left:0; top:8px;
     width:4px; height:4px; background:var(--ink-4); border-radius:50%;
   }
+  .cond-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:3px; }
+  @media (max-width: 599px) { .cond-grid { grid-template-columns:1fr; } }
+  .cond-card {
+    border:1px solid var(--border-soft); border-radius:var(--r-md);
+    padding:12px 14px; background:var(--surface-2);
+  }
+  .cond-card h5 { font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+  .cond-card .eyebrow { margin-top:8px; margin-bottom:3px; }
+  .cond-card ul { list-style:none; display:flex; flex-direction:column; gap:3px; }
+  .cond-card li { font-size:12px; color:var(--ink-2); padding-left:13px; position:relative; }
+  .cond-card li::before {
+    content:""; position:absolute; left:0; top:7px;
+    width:4px; height:4px; background:var(--ink-4); border-radius:50%;
+  }
 
-  /* ── Toast ───────────────────────────────────────────────────────────── */
+  /* ── Toast ────────────────────────────────────────────────────────────── */
   .toast {
-    position:fixed; top:80px; left:50%;
+    position:fixed; top:72px; left:50%;
     transform:translateX(-50%) translateY(0);
     background:var(--ink); color:var(--bg);
     padding:10px 18px; border-radius:var(--r-pill);
     font-size:13px; font-weight:700; box-shadow:var(--shadow-pop);
     z-index:100; pointer-events:none;
     display:flex; align-items:center; gap:8px;
+    white-space:nowrap;
   }
   .toast.hidden { opacity:0; transform:translateX(-50%) translateY(-6px); }
   @media (prefers-reduced-motion: no-preference) {
     .toast { transition:opacity 0.2s, transform 0.2s; }
   }
 
-  /* ── Sticky mobile result bar ────────────────────────────────────────── */
+  /* ── Sticky mobile result bar ─────────────────────────────────────────── */
   .sticky-result {
-    display:none; position:fixed; left:0; right:0; bottom:0;
+    display:none;
+    position:fixed; left:0; right:0; bottom:0;
     background:var(--surface);
     border-top:3px solid var(--accent);
     box-shadow:0 -4px 24px rgba(14,27,43,.10);
-    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
     z-index:40; align-items:center; gap:12px; justify-content:space-between;
   }
   .sticky-result .sticky-label {
@@ -599,76 +692,75 @@ const GLOBAL_CSS = `
     text-overflow:ellipsis; white-space:nowrap;
   }
   .sticky-result .sticky-label .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  @media (max-width: 640px) {
+  @media (max-width: 599px) {
     .sticky-result.visible { display:flex; }
-    main { padding-bottom:100px !important; }
+    .page-wrap { padding-bottom:90px !important; }
   }
 
-  /* ── Legal disclaimer modal ──────────────────────────────────────────── */
+  /* ── Legal disclaimer modal ───────────────────────────────────────────── */
   .disc-overlay {
     position:fixed; inset:0; z-index:999;
-    background:rgba(8,15,26,.80);
+    background:rgba(8,15,26,.82);
     display:flex; align-items:center; justify-content:center;
-    padding:20px;
+    padding:16px;
+    overflow-y:auto;
   }
   .disc-modal {
     background:var(--surface); border-radius:var(--r-lg);
-    max-width:560px; width:100%; box-shadow:var(--shadow-pop); overflow:hidden;
+    max-width:540px; width:100%; box-shadow:var(--shadow-pop); overflow:hidden;
+    margin:auto;
   }
   .disc-head {
     background:color-mix(in srgb,var(--sev-4) 7%,var(--surface));
     border-bottom:1px solid color-mix(in srgb,var(--sev-4) 16%,var(--border));
-    padding:24px 28px 20px;
-    display:flex; align-items:flex-start; gap:14px;
+    padding:20px var(--pad-card) 18px;
+    display:flex; align-items:flex-start; gap:12px;
   }
   .disc-head-icon { color:var(--sev-4); flex-shrink:0; margin-top:2px; }
   .disc-head h1 {
     font-family:var(--font-display);
-    font-size:18px; font-weight:700; color:var(--ink); line-height:1.2;
+    font-size:17px; font-weight:700; color:var(--ink); line-height:1.2;
   }
-  .disc-head .sub { font-size:12.5px; color:var(--ink-3); font-weight:600; margin-top:3px; }
-  .disc-body { padding:24px 28px; display:flex; flex-direction:column; gap:16px; }
+  .disc-head .sub { font-size:12px; color:var(--ink-3); font-weight:600; margin-top:3px; }
+  .disc-body { padding:20px var(--pad-card); display:flex; flex-direction:column; gap:14px; }
   .disc-body p { font-size:14px; color:var(--ink-2); line-height:1.65; }
   .disc-list {
-    list-style:none; display:flex; flex-direction:column; gap:10px;
-    padding:16px; background:var(--surface-2);
+    list-style:none; display:flex; flex-direction:column; gap:9px;
+    padding:14px; background:var(--surface-2);
     border:1px solid var(--border-soft); border-radius:var(--r-md);
   }
   .disc-list li {
-    font-size:13.5px; color:var(--ink-2); line-height:1.5;
-    position:relative; padding-left:18px;
+    font-size:13px; color:var(--ink-2); line-height:1.5;
+    position:relative; padding-left:17px;
   }
   .disc-list li::before {
     content:""; position:absolute; left:0; top:8px;
     width:5px; height:5px; background:var(--sev-3); border-radius:50%;
   }
   .disc-foot {
-    padding:20px 28px; border-top:1px solid var(--border-soft);
-    background:var(--surface-2); display:flex; flex-direction:column; gap:14px;
+    padding:18px var(--pad-card); border-top:1px solid var(--border-soft);
+    background:var(--surface-2); display:flex; flex-direction:column; gap:12px;
   }
   .disc-pdf {
     font-size:13px; color:var(--accent); font-weight:700;
     display:inline-flex; align-items:center; gap:6px;
   }
+  /* Disclaimer CTA: full-width, ≥48px */
   .disc-cta {
-    width:100%; padding:14px; font-size:15px; font-weight:800;
+    width:100%; padding:0 20px; min-height: 52px;
+    font-size:15px; font-weight:800;
     background:var(--cta); color:#fff; border:none;
     border-radius:var(--r-pill); cursor:pointer; font-family:var(--font-sans);
-    min-height:52px; letter-spacing:.01em;
     box-shadow: 0 4px 16px -4px rgba(240,130,24,.55);
     transition: background 150ms, transform 100ms, box-shadow 150ms;
   }
-  .disc-cta:hover {
-    background:var(--cta-strong);
-    box-shadow: 0 6px 22px -4px rgba(240,130,24,.60);
-    transform:translateY(-1px);
-  }
+  .disc-cta:hover { background:var(--cta-strong); box-shadow:0 6px 22px -4px rgba(240,130,24,.60); transform:translateY(-1px); }
   .disc-cta:active { transform:scale(.98); box-shadow:none; }
   .disc-cta:focus-visible { outline:none; box-shadow:var(--focus); }
 
-  /* ── Card footer strip ───────────────────────────────────────────────── */
+  /* ── Card footer strip ────────────────────────────────────────────────── */
   .card-footer-strip {
-    padding:10px var(--pad-card) 12px;
+    padding: 10px var(--pad-card) 12px;
     border-top:1px solid var(--border-soft);
     background:var(--surface-2);
     font-size:11.5px; color:var(--ink-3); line-height:1.6;
@@ -682,14 +774,14 @@ const GLOBAL_CSS = `
     overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
   }
 
-  /* ── Page footer ─────────────────────────────────────────────────────── */
+  /* ── Page footer ──────────────────────────────────────────────────────── */
   footer {
-    text-align:center; padding:20px 32px 36px;
-    font-size:12px; color:var(--ink-3);
+    text-align:center; padding:16px 16px 28px;
+    font-size:11.5px; color:var(--ink-3);
     display:flex; justify-content:center; align-items:center;
-    gap:8px; flex-wrap:wrap; max-width:1200px; margin:0 auto;
+    gap:6px; flex-wrap:wrap; max-width:900px; margin:0 auto;
   }
-  footer a { font-weight:600; }
+  footer a { font-weight:700; }
   .footer-sep { color:var(--border); }
 `;
 
@@ -717,6 +809,7 @@ const IcAlert    = p => <Ic {...p}><path d="M12 9v4"/><path d="M12 17h.01"/><pat
 const IcChevron  = p => <Ic {...p} d="m6 9 6 6 6-6"/>;
 const IcShield   = p => <Ic {...p} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>;
 const IcExternal = p => <Ic {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></Ic>;
+const IcRuler    = p => <Ic {...p} d="M3 17l4-4 2 2 4-4 2 2 4-4"/>;
 
 // ─── Clinical ranges (mm, 0–24 month infants) ─────────────────────────────────
 const RANGES = {
@@ -740,7 +833,6 @@ function validateMeasurement(raw, label, range) {
 
 const toTenths = v => Math.round(v * 10);
 
-// CVAI = |A−B| / max(A,B) × 100  (official CHOA formula)
 function processCvai(a, b) {
   if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) return null;
   const a10 = toTenths(a), b10 = toTenths(b);
@@ -753,8 +845,7 @@ function processCvai(a, b) {
   else if (diff * 100 <= 11 * max) sevIdx = 3;
   else                              sevIdx = 4;
   const displayCvai = (diff / max) * 100;
-  if (!Number.isFinite(displayCvai)) return null;
-  return { displayCvai, sevIdx };
+  return Number.isFinite(displayCvai) ? { displayCvai, sevIdx } : null;
 }
 
 function processCr(ml, ap) {
@@ -762,13 +853,9 @@ function processCr(ml, ap) {
   const ml10 = toTenths(ml), ap10 = toTenths(ap);
   if (ap10 === 0) return null;
   const cr100 = ml10 * 100;
-  let key;
-  if      (cr100 >  90 * ap10) key = "ortho";
-  else if (cr100 >= 85 * ap10) key = "watch";
-  else                          key = "ok";
+  const key = cr100 > 90 * ap10 ? "ortho" : cr100 >= 85 * ap10 ? "watch" : "ok";
   const displayCr = (ml10 / ap10) * 100;
-  if (!Number.isFinite(displayCr)) return null;
-  return { key, displayCr };
+  return Number.isFinite(displayCr) ? { key, displayCr } : null;
 }
 
 // ─── Reference data ───────────────────────────────────────────────────────────
@@ -809,33 +896,27 @@ function fmtTimestamp() {
   return `${n.toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})}    ${n.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true})}`;
 }
 function buildCvaiNote(cvai, sev, rawA, rawB) {
-  return [
-    "PLAGIOCEPHALY ASSESSMENT — Therapedia Physical Therapy", fmtTimestamp(), "",
+  return ["PLAGIOCEPHALY ASSESSMENT — Therapedia Physical Therapy", fmtTimestamp(), "",
     `CVAI: ${cvai.toFixed(2)}%`,
     `Severity: Level ${sev.level} — ${sev.label}  (range: ${sev.rangeFull})`, "",
     "Measurements (caliper):",
     `  Diagonal A (longer):  ${parseFloat(rawA).toFixed(1)} mm`,
     `  Diagonal B (shorter): ${parseFloat(rawB).toFixed(1)} mm`, "",
     "Clinical Presentation:", ...sev.presentation.map(p => `  - ${p}`), "",
-    `Recommendation: ${sev.recommendation}`,
-    `Referral: ${sev.referral}`, "",
+    `Recommendation: ${sev.recommendation}`, `Referral: ${sev.referral}`, "",
     "Source: CHOA Plagiocephaly Severity Scale — choa.org/cranialremolding",
     "Note: This is a reference tool, not a diagnostic device.",
   ].join("\n");
 }
 function buildCrNote(cr, res, rawMl, rawAp) {
-  const ref = res.key === "ortho" ? "Yes — orthotic evaluation recommended"
-            : res.key === "watch" ? "Monitor — reassess at next visit"
-            : "No — within normal range";
-  return [
-    "BRACHYCEPHALY ASSESSMENT — Therapedia Physical Therapy", fmtTimestamp(), "",
-    `Cephalic Ratio: ${cr.toFixed(1)}%`,
-    `Assessment: ${res.label}  (range: ${res.rangeFull})`, "",
+  const ref = res.key==="ortho" ? "Yes — orthotic evaluation recommended"
+            : res.key==="watch" ? "Monitor — reassess at next visit" : "No — within normal range";
+  return ["BRACHYCEPHALY ASSESSMENT — Therapedia Physical Therapy", fmtTimestamp(), "",
+    `Cephalic Ratio: ${cr.toFixed(1)}%`, `Assessment: ${res.label}  (range: ${res.rangeFull})`, "",
     "Measurements (caliper):",
     `  Medial-Lateral (M/L):     ${parseFloat(rawMl).toFixed(1)} mm`,
     `  Anterior-Posterior (A/P): ${parseFloat(rawAp).toFixed(1)} mm`, "",
-    `Recommendation: ${res.detail}`,
-    `Referral: ${ref}`, "",
+    `Recommendation: ${res.detail}`, `Referral: ${ref}`, "",
     "Source: CHOA Plagiocephaly Severity Scale — choa.org/cranialremolding",
     "Note: This is a reference tool, not a diagnostic device.",
   ].join("\n");
@@ -849,13 +930,12 @@ function useCopy() {
     try {
       if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
       else {
-        const el = Object.assign(document.createElement("textarea"), { value:text, style:"position:fixed;top:-9999px;opacity:0" });
+        const el = Object.assign(document.createElement("textarea"), {value:text,style:"position:fixed;top:-9999px;opacity:0"});
         document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el);
       }
-      setCopied(true);
-      clearTimeout(t.current);
+      setCopied(true); clearTimeout(t.current);
       t.current = setTimeout(() => setCopied(false), 2000);
-    } catch (err) { console.warn("Clipboard unavailable:", err.message); }
+    } catch {}
   }, []);
   useEffect(() => () => clearTimeout(t.current), []);
   return [copied, copy];
@@ -864,11 +944,10 @@ function useCopy() {
 function useScrolled(threshold = 8) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const el = document.querySelector('.tp-scroll-host') || window;
-    const handler = () => setScrolled((el === window ? window.scrollY : el.scrollTop) > threshold);
-    el.addEventListener('scroll', handler, { passive: true });
+    const handler = () => setScrolled(window.scrollY > threshold);
+    window.addEventListener("scroll", handler, { passive:true });
     handler();
-    return () => el.removeEventListener('scroll', handler);
+    return () => window.removeEventListener("scroll", handler);
   }, [threshold]);
   return scrolled;
 }
@@ -877,7 +956,7 @@ function useScrolled(threshold = 8) {
 function DiagramCVAI() {
   return (
     <div className="diagram-frame" role="img"
-      aria-label="Top-down skull view: Diagonal A (longer, solid) and Diagonal B (shorter, dashed), both at 30° from nose centre.">
+      aria-label="Top-down skull: Diagonal A (longer solid line) and Diagonal B (shorter dashed), both at 30° from nose centre.">
       <svg viewBox="0 0 280 220" xmlns="http://www.w3.org/2000/svg">
         <line x1="140" y1="20" x2="140" y2="200" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
         <line x1="40" y1="110" x2="240" y2="110" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
@@ -886,14 +965,14 @@ function DiagramCVAI() {
         <rect x="36"  y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.25"/>
         <rect x="236" y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.25"/>
         <line x1="68" y1="48" x2="218" y2="180" stroke="var(--brand-blue)" strokeWidth="2"/>
-        <circle cx="68"  cy="48"  r="4" fill="var(--brand-blue)"/>
+        <circle cx="68" cy="48" r="4" fill="var(--brand-blue)"/>
         <circle cx="218" cy="180" r="4" fill="var(--brand-blue)"/>
         <line x1="212" y1="48" x2="76" y2="172" stroke="var(--ink-3)" strokeWidth="1.75" strokeDasharray="4 3"/>
-        <circle cx="212" cy="48"  r="4" fill="var(--ink-3)"/>
-        <circle cx="76"  cy="172" r="4" fill="var(--ink-3)"/>
-        <text x="50"  y="42"  fontSize="11" fontWeight="700" fill="var(--brand-blue)"  fontFamily="var(--font-mono)">A</text>
-        <text x="222" y="44"  fontSize="11" fontWeight="600" fill="var(--ink-3)"       fontFamily="var(--font-mono)">B</text>
-        <text x="140" y="214" fontSize="9"  fill="var(--ink-3)" textAnchor="middle"    fontFamily="var(--font-mono)">A = longer · B = shorter · 30° from nose</text>
+        <circle cx="212" cy="48" r="4" fill="var(--ink-3)"/>
+        <circle cx="76" cy="172" r="4" fill="var(--ink-3)"/>
+        <text x="50"  y="42"  fontSize="11" fontWeight="700" fill="var(--brand-blue)" fontFamily="var(--font-mono)">A</text>
+        <text x="222" y="44"  fontSize="11" fontWeight="600" fill="var(--ink-3)"      fontFamily="var(--font-mono)">B</text>
+        <text x="140" y="214" fontSize="9"  fill="var(--ink-3)" textAnchor="middle"   fontFamily="var(--font-mono)">A = longer · B = shorter · 30° from nose</text>
       </svg>
     </div>
   );
@@ -902,10 +981,10 @@ function DiagramCVAI() {
 function DiagramCR() {
   return (
     <div className="diagram-frame" role="img"
-      aria-label="Top-down skull view: M/L width (horizontal) and A/P length (vertical).">
+      aria-label="Top-down skull: M/L width (horizontal) and A/P length (vertical).">
       <svg viewBox="0 0 280 220" xmlns="http://www.w3.org/2000/svg">
-        <line x1="140" y1="14"  x2="140" y2="206" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
-        <line x1="32"  y1="110" x2="248" y2="110" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
+        <line x1="140" y1="14" x2="140" y2="206" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
+        <line x1="32" y1="110" x2="248" y2="110" stroke="var(--border-soft)" strokeWidth="0.75" strokeDasharray="2 3"/>
         <ellipse cx="140" cy="110" rx="100" ry="86" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.5"/>
         <path d="M134 25 Q140 19 146 25" fill="none" stroke="var(--ink-2)" strokeWidth="1.5"/>
         <rect x="36"  y="100" width="8" height="20" rx="3" fill="var(--surface)" stroke="var(--ink-2)" strokeWidth="1.25"/>
@@ -924,7 +1003,46 @@ function DiagramCR() {
   );
 }
 
-// ─── Shared components ────────────────────────────────────────────────────────
+// ─── Measurement guide — shared between inline (mobile) and sidebar (tablet+) ─
+const GUIDE_TEXT = {
+  cvai: "Measure at 30° from nose centre to posterior skull using calipers. A = longer diagonal.",
+  cr:   "Measure M/L (width) and A/P (length) using calipers. CR > 90 indicates orthotic evaluation per CHOA.",
+};
+
+function GuideContent({ tab }) {
+  return (
+    <>
+      {tab === "cvai" ? <DiagramCVAI/> : <DiagramCR/>}
+      <div className="measure-note">
+        <span aria-hidden="true">📐</span>
+        <span>{GUIDE_TEXT[tab]}</span>
+      </div>
+    </>
+  );
+}
+
+// Collapsible guide — shown only on mobile (CSS hides on tablet+)
+function InlineGuide({ tab }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="inline-guide">
+      <button className="guide-toggle" aria-expanded={open}
+              onClick={() => setOpen(o => !o)}>
+        <span style={{display:"flex",alignItems:"center",gap:8}}>
+          <IcRuler size={16}/>How to measure
+        </span>
+        <IcChevron size={16} className="chev"/>
+      </button>
+      {open && (
+        <div className="guide-body">
+          <GuideContent tab={tab}/>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Shared UI components ─────────────────────────────────────────────────────
 function Toast({ visible }) {
   return (
     <div role="status" aria-live="polite" aria-atomic="true" className={`toast${visible ? "" : " hidden"}`}>
@@ -941,7 +1059,7 @@ function LegalDisclaimer({ onDismiss }) {
          aria-labelledby="disc-h" aria-describedby="disc-body">
       <div className="disc-modal">
         <div className="disc-head">
-          <span className="disc-head-icon" aria-hidden="true"><IcShield size={26}/></span>
+          <span className="disc-head-icon" aria-hidden="true"><IcShield size={24}/></span>
           <div>
             <h1 id="disc-h">Reference Tool — Not a Diagnostic Device</h1>
             <div className="sub">Read before continuing</div>
@@ -950,8 +1068,7 @@ function LegalDisclaimer({ onDismiss }) {
         <div className="disc-body" id="disc-body">
           <p>
             This tool is based on the official <strong>CHOA Plagiocephaly Severity Scale</strong>.
-            It is <strong style={{color:"var(--sev-4)"}}>NOT a diagnostic device</strong> and must not
-            replace clinical judgment.
+            It is <strong style={{color:"var(--sev-4)"}}>NOT a diagnostic device</strong> and must not replace clinical judgment.
           </p>
           <ul className="disc-list" role="list">
             <li>Use as a reference only — not for diagnosis or treatment decisions</li>
@@ -963,7 +1080,7 @@ function LegalDisclaimer({ onDismiss }) {
         <div className="disc-foot">
           <a href={CHOA_PDF} target="_blank" rel="noopener noreferrer" className="disc-pdf"
              aria-label="Official CHOA Plagiocephaly Severity Scale PDF (opens in new tab)">
-            <IcExternal size={14}/>Official CHOA Plagiocephaly Severity Scale PDF
+            <IcExternal size={13}/>Official CHOA Plagiocephaly Severity Scale PDF
           </a>
           <button ref={btnRef} className="disc-cta" onClick={onDismiss}
                   aria-label="Acknowledge disclaimer and continue to the reference tool">
@@ -975,6 +1092,7 @@ function LegalDisclaimer({ onDismiss }) {
   );
 }
 
+// Touch-friendly input: 52px min-height, 16px font-size, visible label
 function NumberInput({ id, label, hint, rangeLabel, swatchVar, value, onChange, nextId }) {
   const handleKeyDown = e => {
     if (e.key === "Enter" && nextId) document.getElementById(nextId)?.focus();
@@ -1004,9 +1122,7 @@ function NumberInput({ id, label, hint, rangeLabel, swatchVar, value, onChange, 
 
 function AlertBox({ children }) {
   return (
-    <div className="alert" role="alert">
-      <IcAlert size={16}/><span>{children}</span>
-    </div>
+    <div className="alert" role="alert"><IcAlert size={16}/><span>{children}</span></div>
   );
 }
 
@@ -1018,7 +1134,7 @@ function ResultCard({ eyebrow, value, unit, rangeMain, rangeSub,
   useEffect(() => {
     if (!ref.current) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) { ref.current.style.opacity="1"; ref.current.style.transition="none"; return; }
+    if (reduced) { ref.current.style.opacity="1"; return; }
     ref.current.style.opacity = "0";
     requestAnimationFrame(() => {
       if (!ref.current) return;
@@ -1042,7 +1158,7 @@ function ResultCard({ eyebrow, value, unit, rangeMain, rangeSub,
           {unit && <span className="pct">{unit}</span>}
           <span className="range">
             <strong>{rangeMain}</strong>
-            <span style={{fontFamily:"var(--font-mono)",fontSize:12}}>{rangeSub}</span>
+            <span style={{fontFamily:"var(--font-mono)",fontSize:11}}>{rangeSub}</span>
           </span>
         </div>
       </div>
@@ -1054,19 +1170,20 @@ function ResultCard({ eyebrow, value, unit, rangeMain, rangeSub,
         {presentation?.length > 0 && (
           <div className="result-section">
             <h3>Clinical presentation</h3>
-            <ul>{presentation.map((p, i) => <li key={i}>{p}</li>)}</ul>
+            <ul>{presentation.map((p,i) => <li key={i}>{p}</li>)}</ul>
           </div>
         )}
       </div>
       <div className="result-actions">
+        {/* Mobile: full-width stacked, tablet+: row */}
         <button className="btn btn-ghost" onClick={onClear}
                 aria-label="Clear all measurements and start a new patient">
-          <IcRefresh size={14}/>New patient
+          <IcRefresh size={15}/>New patient
         </button>
         <button className={`btn btn-primary${copied ? " copied" : ""}`}
                 onClick={() => { copy(copyText); onCopy(); }}
-                aria-label={copied ? "Result copied to clipboard" : "Copy structured note for EMR"}>
-          {copied ? <IcCheck size={14}/> : <IcCopy size={14}/>}
+                aria-label={copied ? "Copied to clipboard" : "Copy structured note for EMR"}>
+          {copied ? <IcCheck size={15}/> : <IcCopy size={15}/>}
           {copied ? "Copied" : "Copy for EMR"}
         </button>
       </div>
@@ -1074,7 +1191,7 @@ function ResultCard({ eyebrow, value, unit, rangeMain, rangeSub,
   );
 }
 
-// ─── Calculator panels ────────────────────────────────────────────────────────
+// ─── Calculator panels (inputs + validation + result — no diagram) ────────────
 function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
   const vA = validateMeasurement(a, "Diagonal A", RANGES.diagA);
   const vB = validateMeasurement(b, "Diagonal B", RANGES.diagB);
@@ -1090,12 +1207,7 @@ function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
   const copyText  = useMemo(() => sev ? buildCvaiNote(cvai, sev, a, b) : "", [cvai, sev?.level, a, b]);
 
   return (
-    <>
-      <DiagramCVAI/>
-      <div className="measure-note">
-        <span aria-hidden="true">📐</span>
-        <span>Measure at 30° from nose centre to posterior skull using calipers. A = longer diagonal.</span>
-      </div>
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div className="input-grid">
         <NumberInput id="cvai-a" label="Diagonal A" hint="longer"
                      rangeLabel={RANGES.diagA.label}
@@ -1104,6 +1216,8 @@ function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
                      rangeLabel={RANGES.diagB.label}
                      swatchVar="var(--ink-3)" value={b} onChange={setB}/>
       </div>
+      {/* Collapsible guide — mobile only, hidden on tablet+ via CSS */}
+      <InlineGuide tab="cvai"/>
       {warnMsg && <div className="field-warning" role="status" aria-live="polite">{warnMsg}</div>}
       {bothEmpty && <div className="result-empty">Enter both diagonal measurements to calculate CVAI</div>}
       {errorMsg && <AlertBox>{errorMsg}</AlertBox>}
@@ -1115,7 +1229,7 @@ function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
           recommendation={sev.recommendation} presentation={sev.presentation}
           copyText={copyText} onCopy={onCopy} onClear={onClear}/>
       )}
-    </>
+    </div>
   );
 }
 
@@ -1132,12 +1246,7 @@ function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
   const copyText  = useMemo(() => res ? buildCrNote(cr, res, ml, ap) : "", [cr, res?.key, ml, ap]);
 
   return (
-    <>
-      <DiagramCR/>
-      <div className="measure-note">
-        <span aria-hidden="true">📐</span>
-        <span>Measure M/L (width) and A/P (length) using calipers. CR &gt; 90 indicates orthotic evaluation per CHOA.</span>
-      </div>
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div className="input-grid">
         <NumberInput id="cr-ml" label="Width (M/L)" hint="medial-lateral"
                      rangeLabel={RANGES.crMl.label}
@@ -1146,6 +1255,7 @@ function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
                      rangeLabel={RANGES.crAp.label}
                      swatchVar="var(--ink-3)" value={ap} onChange={setAp}/>
       </div>
+      <InlineGuide tab="cr"/>
       {warnMsg && <div className="field-warning" role="status" aria-live="polite">{warnMsg}</div>}
       {bothEmpty && <div className="result-empty">Enter both measurements to calculate Cephalic Ratio</div>}
       {errorMsg && <AlertBox>{errorMsg}</AlertBox>}
@@ -1154,10 +1264,10 @@ function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
           rangeMain={res.short} rangeSub={res.rangeFull}
           sevLabel={res.label} sevVar={res.sevVar}
           recommendation={res.detail}
-          presentation={res.key === "ortho" ? res.presentation : null}
+          presentation={res.key==="ortho" ? res.presentation : null}
           copyText={copyText} onCopy={onCopy} onClear={onClear}/>
       )}
-    </>
+    </div>
   );
 }
 
@@ -1170,42 +1280,28 @@ function SeverityTable() {
         <span className="card-meta">5 levels · CVAI</span>
       </div>
       <div className="table-scroll" tabIndex={0} role="region"
-           aria-label="CHOA severity scale reference table">
+           aria-label="CHOA severity scale — scroll to see all columns">
         <table className="sev-table">
-          <caption className="sr-only">
-            CHOA Plagiocephaly Severity Scale: five levels from normal (Level 1) to very severe (Level 5)
-          </caption>
+          <caption className="sr-only">CHOA Plagiocephaly Severity Scale: five levels from normal to very severe</caption>
           <thead>
-            <tr>
-              {["Level","CVAI","Presentation","Recommendation"].map(h => (
-                <th key={h} scope="col">{h}</th>
-              ))}
-            </tr>
+            <tr>{["Level","CVAI","Presentation","Recommendation"].map(h => <th key={h} scope="col">{h}</th>)}</tr>
           </thead>
           <tbody>
             {SEVERITY.map(s => (
               <tr key={s.level}>
-                <td>
-                  <span className="level-num" style={{"--sev-color":s.sevVar}}>
-                    <span className="bar" aria-hidden="true"/>L{s.level}
-                  </span>
-                </td>
+                <td><span className="level-num" style={{"--sev-color":s.sevVar}}><span className="bar" aria-hidden="true"/>L{s.level}</span></td>
                 <td className="range-cell">{s.range}</td>
-                <td className="pres-cell">
-                  <ul>{s.presentation.map((p,i) => <li key={i}>{p}</li>)}</ul>
-                </td>
+                <td className="pres-cell"><ul>{s.presentation.map((p,i) => <li key={i}>{p}</li>)}</ul></td>
                 <td className="rec-cell">{s.recommendation}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div style={{padding:"14px var(--pad-card) 18px",fontSize:11.5,color:"var(--ink-3)",lineHeight:1.6}}>
+      <div style={{padding:"10px var(--pad-card) 14px",fontSize:11,color:"var(--ink-3)",lineHeight:1.6}}>
         Recommendations are examples, not a substitute for clinical judgment.{" "}
         <a href={CHOA_PDF} target="_blank" rel="noopener noreferrer"
-           aria-label="View official CHOA Plagiocephaly Severity Scale PDF (opens in new tab)">
-          View official CHOA scale ↗
-        </a>
+           aria-label="View official CHOA PDF (opens in new tab)">View official CHOA scale ↗</a>
       </div>
     </section>
   );
@@ -1217,9 +1313,7 @@ function AgeGuidelines() {
     <section className="card" aria-labelledby="age-h">
       <button className="accordion-toggle" aria-expanded={open} aria-controls="age-body"
               onClick={() => setOpen(o => !o)}>
-        <h2 id="age-h" className="card-title" style={{marginBottom:0,paddingBottom:0,border:"none"}}>
-          Age-specific guidelines
-        </h2>
+        <h2 id="age-h" className="card-title" style={{margin:0,border:"none"}}>Age-specific guidelines</h2>
         <IcChevron size={16} className="chev"/>
       </button>
       {open && (
@@ -1242,30 +1336,16 @@ function AgeGuidelines() {
                 <div className="cond-card">
                   <h5>Plagiocephaly</h5>
                   <div className="eyebrow">Clinical presentation</div>
-                  <ul>
-                    <li>Ipsilateral ear shift</li>
-                    <li>Ipsilateral frontal bossing</li>
-                    <li>Contralateral frontal flattening</li>
-                  </ul>
+                  <ul><li>Ipsilateral ear shift</li><li>Ipsilateral frontal bossing</li><li>Contralateral frontal flattening</li></ul>
                   <div className="eyebrow">Documentation</div>
-                  <ul>
-                    <li>Measure longest and shortest diagonals with calipers</li>
-                    <li>Calculate CVAI</li>
-                  </ul>
+                  <ul><li>Measure diagonals with calipers</li><li>Calculate CVAI</li></ul>
                 </div>
                 <div className="cond-card">
                   <h5>Brachycephaly</h5>
                   <div className="eyebrow">Clinical presentation</div>
-                  <ul>
-                    <li>Bilateral forehead bossing</li>
-                    <li>Increased posterior vault</li>
-                    <li>Bilateral parietal protrusion above ears</li>
-                  </ul>
+                  <ul><li>Bilateral forehead bossing</li><li>Increased posterior vault</li><li>Bilateral parietal protrusion above ears</li></ul>
                   <div className="eyebrow">Documentation</div>
-                  <ul>
-                    <li>Measure M/L and A/P with calipers</li>
-                    <li>Calculate CR — if CR &gt; 90, refer for orthotic evaluation</li>
-                  </ul>
+                  <ul><li>Measure M/L and A/P with calipers</li><li>CR &gt; 90 → refer for orthotic evaluation</li></ul>
                 </div>
               </div>
             </div>
@@ -1286,7 +1366,7 @@ function StickyResult({ visible, value, label, sevVar, copyText, onCopy }) {
         <span>{value}  ·  {label}</span>
       </div>
       <button className={`btn btn-primary${copied ? " copied" : ""}`}
-              style={{fontSize:12,padding:"8px 16px",minHeight:36,borderRadius:"var(--r-pill)"}}
+              style={{minHeight:40,padding:"0 16px",borderRadius:"var(--r-pill)",fontSize:13}}
               onClick={() => { copy(copyText); onCopy(); }}>
         {copied ? <IcCheck size={13}/> : <IcCopy size={13}/>}
         {copied ? "Copied" : "Copy"}
@@ -1312,17 +1392,16 @@ export default function App() {
   const clearAll = () => { setCvaiA(""); setCvaiB(""); setCrMl(""); setCrAp(""); };
 
   const showToast = () => {
-    setToast(true);
-    clearTimeout(toastT.current);
+    setToast(true); clearTimeout(toastT.current);
     toastT.current = setTimeout(() => setToast(false), 2000);
   };
   useEffect(() => () => clearTimeout(toastT.current), []);
 
-  const TABS = ["cvai","cr"];
+  const TABS = ["cvai", "cr"];
   const handleTabKey = useCallback(e => {
     const i = TABS.indexOf(tab);
-    if (e.key === "ArrowRight") { e.preventDefault(); const next=TABS[(i+1)%2]; setTab(next); document.getElementById(`tab-${next}`)?.focus(); }
-    if (e.key === "ArrowLeft")  { e.preventDefault(); const prev=TABS[(i-1+2)%2]; setTab(prev); document.getElementById(`tab-${prev}`)?.focus(); }
+    if (e.key === "ArrowRight") { e.preventDefault(); const n=TABS[(i+1)%2]; setTab(n); document.getElementById(`tab-${n}`)?.focus(); }
+    if (e.key === "ArrowLeft")  { e.preventDefault(); const p=TABS[(i-1+2)%2]; setTab(p); document.getElementById(`tab-${p}`)?.focus(); }
   }, [tab]);
 
   const sticky = useMemo(() => {
@@ -1351,90 +1430,104 @@ export default function App() {
       <header className={`appbar${scrolled ? " is-scrolled" : ""}`}>
         <div className="appbar-inner">
           <div className="brand">
-            {/* Therapedia logo */}
             <img src="/logo-color.png" alt="Therapedia" className="brand-logo"/>
             <span className="brand-divider" aria-hidden="true"/>
             <div className="brand-text">
               <span className="brand-name" aria-label="Therapedia Plagiocephaly Assessment">
                 <span className="thera">Thera</span><em className="pedia">pedia</em><span className="dot">.</span>
               </span>
-              <span className="brand-meta">Plagiocephaly Assessment · Physical Therapy</span>
+              <span className="brand-meta">Plagiocephaly · Physical Therapy</span>
             </div>
           </div>
-          <span className="status-pill" aria-label="No patient data is stored or transmitted">
+          <span className="status-pill" aria-label="No patient data stored">
             <IcShield size={12} aria-hidden="true"/>No data stored
           </span>
         </div>
       </header>
 
       <main id="main">
-        <div className="col-stack">
-          <section className="card" aria-labelledby="calc-h">
-            <div className="card-pad" style={{paddingBottom:0}}>
-              <div className="card-head-flex" style={{marginBottom:18}}>
-                <div>
-                  <h1 id="calc-h" className="card-title" style={{fontSize:20}}>
-                    {tab === "cvai" ? "Cranial Vault Asymmetry Index" : "Cephalic Ratio"}
-                  </h1>
-                  <div className="card-meta" style={{marginTop:4}}>
-                    {tab === "cvai" ? "Diagonal asymmetry · plagiocephaly" : "Width-to-length ratio · brachycephaly"}
-                  </div>
-                </div>
-                <span className="formula-chip"
-                      aria-label={tab === "cvai" ? "Formula: absolute difference of A and B divided by max, times 100" : "Formula: M/L divided by A/P times 100"}>
-                  <span className="label" aria-hidden="true">f(x)</span>
-                  <span aria-hidden="true">{tab === "cvai" ? "|A−B| ÷ max(A,B) × 100" : "(M/L ÷ A/P) × 100"}</span>
-                </span>
-              </div>
-              <div role="tablist" aria-label="Calculator type" className="modeswitch" onKeyDown={handleTabKey}>
-                {[
-                  { id:"cvai", label:"Plagiocephaly", sub:"CVAI" },
-                  { id:"cr",   label:"Brachycephaly",  sub:"Cephalic Ratio" },
-                ].map(m => (
-                  <button key={m.id} id={`tab-${m.id}`} role="tab"
-                          aria-selected={tab === m.id} aria-controls={`panel-${m.id}`}
-                          onClick={() => setTab(m.id)}>
-                    {m.label}<span className="sub">{m.sub}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="card-pad">
-              <div id="panel-cvai" role="tabpanel" aria-labelledby="tab-cvai"
-                   style={{display:tab==="cvai"?"flex":"none",flexDirection:"column",gap:10}}>
-                <CvaiPanel a={cvaiA} setA={setCvaiA} b={cvaiB} setB={setCvaiB}
-                           onCopy={showToast} onClear={clearAll}/>
-              </div>
-              <div id="panel-cr" role="tabpanel" aria-labelledby="tab-cr"
-                   style={{display:tab==="cr"?"flex":"none",flexDirection:"column",gap:10}}>
-                <CrPanel ml={crMl} setMl={setCrMl} ap={crAp} setAp={setCrAp}
-                         onCopy={showToast} onClear={clearAll}/>
-              </div>
-            </div>
-            <div className="card-footer-strip">
-              <IcShield size={11} aria-hidden="true"/>
-              No patient data is stored locally or on servers. Measurements are cleared on page refresh.
-            </div>
-          </section>
-        </div>
+        {/* Mobile-first: single column → two-column grid at 600px → centered 900px at 1000px */}
+        <div className="page-wrap">
 
-        <div className="col-stack">
-          <SeverityTable/>
-          <AgeGuidelines/>
+          {/* ── Left / full-width column: calculator ── */}
+          <div style={{minWidth:0}}>
+            <section className="card" aria-labelledby="calc-h">
+              <div className="card-pad" style={{paddingBottom:0}}>
+                <div className="card-head-flex" style={{marginBottom:14}}>
+                  <div>
+                    <h1 id="calc-h" className="card-title" style={{fontSize:18}}>
+                      {tab === "cvai" ? "Cranial Vault Asymmetry Index" : "Cephalic Ratio"}
+                    </h1>
+                    <div className="card-meta" style={{marginTop:3}}>
+                      {tab === "cvai" ? "Diagonal asymmetry · plagiocephaly" : "Width-to-length ratio · brachycephaly"}
+                    </div>
+                  </div>
+                  <span className="formula-chip"
+                        aria-label={tab === "cvai" ? "Formula: absolute difference divided by max, times 100" : "Formula: M/L divided by A/P, times 100"}>
+                    <span className="label" aria-hidden="true">f(x)</span>
+                    <span aria-hidden="true">{tab === "cvai" ? "|A−B| ÷ max × 100" : "M/L ÷ A/P × 100"}</span>
+                  </span>
+                </div>
+                <div role="tablist" aria-label="Calculator type" className="modeswitch" onKeyDown={handleTabKey}>
+                  {[
+                    { id:"cvai", label:"Plagiocephaly", sub:"CVAI" },
+                    { id:"cr",   label:"Brachycephaly",  sub:"Cephalic Ratio" },
+                  ].map(m => (
+                    <button key={m.id} id={`tab-${m.id}`} role="tab"
+                            aria-selected={tab === m.id} aria-controls={`panel-${m.id}`}
+                            onClick={() => setTab(m.id)}>
+                      {m.label}<span className="sub">{m.sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card-pad">
+                <div id="panel-cvai" role="tabpanel" aria-labelledby="tab-cvai"
+                     style={{display:tab==="cvai"?"block":"none"}}>
+                  <CvaiPanel a={cvaiA} setA={setCvaiA} b={cvaiB} setB={setCvaiB}
+                             onCopy={showToast} onClear={clearAll}/>
+                </div>
+                <div id="panel-cr" role="tabpanel" aria-labelledby="tab-cr"
+                     style={{display:tab==="cr"?"block":"none"}}>
+                  <CrPanel ml={crMl} setMl={setCrMl} ap={crAp} setAp={setCrAp}
+                           onCopy={showToast} onClear={clearAll}/>
+                </div>
+              </div>
+
+              <div className="card-footer-strip">
+                <IcShield size={11} aria-hidden="true"/>
+                No patient data stored. Measurements cleared on page refresh.
+              </div>
+            </section>
+          </div>
+
+          {/* ── Right column: reference sidebar (hidden on mobile via CSS) ── */}
+          <div className="ref-col">
+            {/* Guide card: hidden on mobile, visible tablet+ via CSS */}
+            <div className="card guide-sidebar-card">
+              <div className="card-head">
+                <h2 className="card-title">How to measure</h2>
+                <span className="card-meta">{tab === "cvai" ? "CVAI" : "Cephalic Ratio"}</span>
+              </div>
+              <div style={{padding:"0 var(--pad-card) var(--pad-card)"}}>
+                <GuideContent tab={tab}/>
+              </div>
+            </div>
+
+            <SeverityTable/>
+            <AgeGuidelines/>
+          </div>
         </div>
       </main>
 
       <footer>
-        <img src="/logo-color.png" alt="Therapedia" style={{height:20,opacity:.7,verticalAlign:"middle"}}/>
+        <img src="/logo-color.png" alt="Therapedia" style={{height:18,opacity:.65,verticalAlign:"middle"}}/>
         <span className="footer-sep" aria-hidden="true">·</span>
         <span>Pediatric Physical Therapy · Keller &amp; Justin, TX</span>
         <span className="footer-sep" aria-hidden="true">·</span>
         <a href={CHOA_PDF} target="_blank" rel="noopener noreferrer"
-           aria-label="CHOA Plagiocephaly Severity Scale PDF (opens in new tab)">
-          CHOA Severity Scale
-        </a>
-        <span className="footer-sep" aria-hidden="true">·</span>
-        <span>© 2015 Children's Healthcare of Atlanta · ORTH 961942</span>
+           aria-label="CHOA Severity Scale PDF (opens in new tab)">CHOA Severity Scale</a>
         <span className="footer-sep" aria-hidden="true">·</span>
         <span>No patient data collected</span>
       </footer>
