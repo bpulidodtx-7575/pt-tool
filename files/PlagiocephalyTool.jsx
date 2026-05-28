@@ -1,81 +1,81 @@
-// CHOA Plagiocephaly Assessment Tool — Therapedia Edition
+// CHOA Plagiocephaly Assessment Tool — Flat Design Edition
 // CVAI formula: |A−B| / max(A,B) × 100  (official CHOA formula)
 // Responsive: mobile-first (600px tablet, 1000px desktop)
 // Touch targets: ≥48px on all interactive elements
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
-if (typeof document !== "undefined") {
-  [
-    { rel:"preconnect", href:"https://fonts.googleapis.com" },
-    { rel:"preconnect", href:"https://fonts.gstatic.com", crossOrigin:"anonymous" },
-    { rel:"stylesheet", href:"https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,600;0,700;1,600;1,700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700&family=JetBrains+Mono:wght@400;500;600&display=swap" },
-  ].forEach(({ rel, href, crossOrigin }) => {
-    if (document.querySelector(`link[href="${href}"]`)) return;
-    const el = document.createElement("link");
-    el.rel = rel; el.href = href;
-    if (crossOrigin) el.crossOrigin = crossOrigin;
-    document.head.prepend(el);
-  });
-}
-
 const GLOBAL_CSS = `
-  /* ── Therapedia Design System tokens ─────────────────────────────────── */
+  /* ── Flat Design System tokens ────────────────────────────────────────── */
   :root {
-    --brand-blue:        #0070BD;
-    --brand-blue-deep:   #00538C;
-    --brand-blue-soft:   #D6EAF6;
-    --brand-orange:      #F08218;
-    --brand-orange-deep: #C7670C;
-    --brand-orange-soft: #FCE6D0;
-    --brand-red:         #E11E15;
-    --brand-red-deep:    #B0140E;
-    --brand-red-soft:    #FBD9D7;
+    /* Core palette */
+    --bg:        #ffffff;
+    --fg:        #0a0a0a;
+    --accent:    #f2673c;
+    --accent-2:  #8b5cf6;
+    --muted:     #666666;
+    --border:    #e6e6e6;
+    --surface:   #ffffff;
 
-    --font-display: "Bookman Old Style","Bookman","Bitter",Georgia,"Times New Roman",serif;
-    --font-sans:    "Nunito Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    --font-mono:    "JetBrains Mono",ui-monospace,Menlo,monospace;
+    /* Typography — system stack, no web fonts */
+    --font-display: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-sans:    system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono:    ui-monospace, 'JetBrains Mono', monospace;
 
-    --ink-900: #0E1B2B;
-    --ink-700: #1F2F40;
-    --ink-500: #4A5A6B;
-    --ink-300: #8E9AA5;
-    --ink-200: #C3CCD3;
-    --ink-100: #E3E8EC;
+    /* Ink scale */
+    --ink-900: #0a0a0a;
+    --ink-700: #1a1a1a;
+    --ink-500: #666666;
+    --ink-300: #999999;
+    --ink-200: #e6e6e6;
+    --ink-100: #f4f4f4;
 
-    --bg:        #FBF7F0;
-    --surface:   #FFFFFF;
-    --surface-2: #F5EFE4;
-    --surface-3: #EDE4D4;
-    --border:      var(--ink-200);
-    --border-soft: var(--ink-100);
+    /* Surfaces */
+    --surface-2: #f8f8f8;
+    --surface-3: #f2f2f2;
+    --border-soft: #f0f0f0;
+
+    /* Aliases */
     --ink:   var(--ink-900);
     --ink-2: var(--ink-700);
     --ink-3: var(--ink-500);
     --ink-4: var(--ink-300);
 
-    --accent:        var(--brand-blue);
-    --accent-soft:   var(--brand-blue-soft);
-    --accent-strong: var(--brand-blue-deep);
-    --accent-ink:    #003A70;
-    --cta:           var(--brand-orange);
-    --cta-soft:      var(--brand-orange-soft);
-    --cta-strong:    var(--brand-orange-deep);
+    /* Accent / CTA */
+    --accent-soft:   #fff0ec;
+    --accent-strong: #d94a1e;
+    --accent-ink:    #7c1a00;
+    --cta:           var(--accent);
+    --cta-soft:      #fff0ec;
+    --cta-strong:    #d94a1e;
 
+    /* Brand aliases (used in diagrams & brand name) */
+    --brand-blue:        var(--accent);
+    --brand-blue-deep:   var(--accent-strong);
+    --brand-blue-soft:   var(--accent-soft);
+    --brand-orange:      var(--accent-2);
+    --brand-orange-deep: #7c3aed;
+    --brand-orange-soft: #f3eefe;
+    --brand-red:         var(--accent);
+    --brand-red-deep:    var(--accent-strong);
+    --brand-red-soft:    var(--accent-soft);
+
+    /* Severity — clinical, keep readable */
     --sev-1: #2E9D5B;
     --sev-2: #8a7200;
     --sev-3: #C7670C;
     --sev-4: #c04020;
     --sev-5: #B0140E;
 
-    --shadow-card: 0 4px 12px rgba(14,27,43,.07), 0 2px 4px rgba(14,27,43,.04);
-    --shadow-pop:  0 12px 28px rgba(14,27,43,.10), 0 4px 8px rgba(14,27,43,.05);
-    --focus: 0 0 0 3px rgba(0,112,189,.25), 0 0 0 1.5px rgba(0,112,189,.6);
+    /* Shadows — flat/subtle */
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-pop:  0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --focus: 0 0 0 3px rgba(242,103,60,.20), 0 0 0 1.5px rgba(242,103,60,.50);
 
-    --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 20px; --r-pill: 999px;
+    /* Radii — Flat uses 10px for buttons, 14px for cards */
+    --r-xs: 4px; --r-sm: 8px; --r-md: 10px; --r-lg: 14px; --r-pill: 999px;
     --pad-card:  24px;
     --gap-stack: 16px;
 
-    /* appbar height used for sticky sidebar offset */
     --appbar-h: 58px;
   }
 
@@ -86,18 +86,25 @@ const GLOBAL_CSS = `
   /* ── Dark mode ─────────────────────────────────────────────────────────── */
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg:        #080F1A;  --surface:   #0C1625;
-      --surface-2: #11203A;  --surface-3: #172A4A;
-      --border:      #1E3050;  --border-soft: #162540;
-      --ink:   #EBF0F5;  --ink-2: #C8D4DD;
-      --ink-3: #7A8F9E;  --ink-4: #4A5E6E;
-      --accent:        #3EA7E8;  --accent-soft:  #0A2540;
-      --accent-strong: #61BCE8;  --accent-ink:   #A8D8F5;
-      --cta:           #F08218;  --cta-soft:     #3A1E00;  --cta-strong: #FFB460;
+      --bg: #0f0f0f;       --fg: #f0f0f0;
+      --surface:   #1a1a1a;  --surface-2: #222222;  --surface-3: #2a2a2a;
+      --border: #2e2e2e;   --border-soft: #252525;
+      --ink-900: #f0f0f0;  --ink-700: #d4d4d4;
+      --ink-500: #999999;  --ink-300: #666666;
+      --ink-200: #2e2e2e;  --ink-100: #222222;
+      --ink:   var(--ink-900); --ink-2: var(--ink-700);
+      --ink-3: var(--ink-500); --ink-4: var(--ink-300);
+      --accent:        #f2673c;  --accent-2:    #a78bfa;
+      --accent-soft:   rgba(242,103,60,.15);
+      --accent-strong: #ff7d52;  --accent-ink:  #ffb89e;
+      --cta:           #f2673c;  --cta-soft:    rgba(242,103,60,.12);  --cta-strong: #ff7d52;
+      --brand-blue:    #f2673c;  --brand-blue-deep: #ff7d52;  --brand-blue-soft: rgba(242,103,60,.15);
+      --brand-orange:  #a78bfa;  --brand-orange-deep: #c4b5fd;  --brand-orange-soft: rgba(167,139,250,.15);
+      --brand-red:     #f2673c;  --brand-red-deep: #ff7d52;  --brand-red-soft: rgba(242,103,60,.15);
       --sev-1:#5ecc80; --sev-2:#d4b800; --sev-3:#E08820; --sev-4:#e06040; --sev-5:#d04030;
-      --shadow-card: 0 4px 12px rgba(0,0,0,.40), 0 2px 4px rgba(0,0,0,.30);
-      --shadow-pop:  0 12px 28px rgba(0,0,0,.55), 0 4px 8px rgba(0,0,0,.35);
-      --focus: 0 0 0 3px rgba(62,167,232,.30), 0 0 0 1.5px rgba(62,167,232,.55);
+      --shadow-card: 0 1px 4px rgba(0,0,0,.40);
+      --shadow-pop:  0 8px 24px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35);
+      --focus: 0 0 0 3px rgba(242,103,60,.30), 0 0 0 1.5px rgba(242,103,60,.60);
     }
   }
 
@@ -533,8 +540,8 @@ const GLOBAL_CSS = `
     padding: 0 20px;
     /* ≥48px touch target — enforced always, not just on touch devices */
     min-height: 48px;
-    border-radius:var(--r-pill);
-    font-size:14px; font-weight:700; font-family:var(--font-sans);
+    border-radius:var(--r-md);
+    font-size:14px; font-weight:600; font-family:var(--font-sans);
     cursor:pointer; border:none; line-height:1;
     touch-action:manipulation; -webkit-tap-highlight-color:transparent;
     white-space:nowrap;
@@ -545,11 +552,11 @@ const GLOBAL_CSS = `
 
   .btn-primary {
     background:var(--cta); color:#fff;
-    box-shadow: 0 3px 12px -3px rgba(240,130,24,.50);
+    box-shadow: 0 3px 12px -3px rgba(242,103,60,.40);
   }
   .btn-primary:hover {
     background:var(--cta-strong);
-    box-shadow: 0 5px 18px -3px rgba(240,130,24,.55);
+    box-shadow: 0 5px 18px -3px rgba(242,103,60,.45);
     transform: translateY(-1px);
   }
   .btn-primary:active { transform:scale(.98); box-shadow:none; }
@@ -748,13 +755,13 @@ const GLOBAL_CSS = `
   /* Disclaimer CTA: full-width, ≥48px */
   .disc-cta {
     width:100%; padding:0 20px; min-height: 52px;
-    font-size:15px; font-weight:800;
+    font-size:15px; font-weight:700;
     background:var(--cta); color:#fff; border:none;
-    border-radius:var(--r-pill); cursor:pointer; font-family:var(--font-sans);
-    box-shadow: 0 4px 16px -4px rgba(240,130,24,.55);
+    border-radius:var(--r-md); cursor:pointer; font-family:var(--font-sans);
+    box-shadow: 0 4px 16px -4px rgba(242,103,60,.45);
     transition: background 150ms, transform 100ms, box-shadow 150ms;
   }
-  .disc-cta:hover { background:var(--cta-strong); box-shadow:0 6px 22px -4px rgba(240,130,24,.60); transform:translateY(-1px); }
+  .disc-cta:hover { background:var(--cta-strong); box-shadow:0 6px 22px -4px rgba(242,103,60,.50); transform:translateY(-1px); }
   .disc-cta:active { transform:scale(.98); box-shadow:none; }
   .disc-cta:focus-visible { outline:none; box-shadow:var(--focus); }
 
