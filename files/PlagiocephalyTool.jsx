@@ -307,7 +307,7 @@ function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
   const result    = (!anyEmpty && !errorMsg && !logicErr) ? processCvai(vA.value, vB.value) : null;
   const sev       = result ? SEVERITY[result.sevIdx] : null;
   const cvai      = result?.displayCvai ?? null;
-  const copyText  = useMemo(() => sev ? buildCvaiNote(cvai, sev, a, b) : "", [cvai, sev?.level, a, b]);
+  const copyText  = useMemo(() => sev ? buildCvaiNote(cvai, sev, a, b) : "", [cvai, sev, a, b]);
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -344,9 +344,9 @@ function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
   const errorMsg  = (!vMl.ok && !vMl.empty) ? vMl.error : (!vAp.ok && !vAp.empty) ? vAp.error : null;
   const warnMsg   = !errorMsg ? (vMl.warning || vAp.warning) : null;
   const result    = (!anyEmpty && !errorMsg) ? processCr(vMl.value, vAp.value) : null;
-  const res       = result ? { ...CR_LEVELS[result.key], key:result.key } : null;
+  const res       = useMemo(() => result ? { ...CR_LEVELS[result.key], key:result.key } : null, [result]);
   const cr        = result?.displayCr ?? null;
-  const copyText  = useMemo(() => res ? buildCrNote(cr, res, ml, ap) : "", [cr, res?.key, ml, ap]);
+  const copyText  = useMemo(() => res ? buildCrNote(cr, res, ml, ap) : "", [cr, res, ml, ap]);
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -500,8 +500,8 @@ export default function App() {
   };
   useEffect(() => () => clearTimeout(toastT.current), []);
 
-  const TABS = ["cvai", "cr"];
   const handleTabKey = useCallback(e => {
+    const TABS = ["cvai", "cr"];
     const i = TABS.indexOf(tab);
     if (e.key === "ArrowRight") { e.preventDefault(); const n=TABS[(i+1)%2]; setTab(n); document.getElementById(`tab-${n}`)?.focus(); }
     if (e.key === "ArrowLeft")  { e.preventDefault(); const p=TABS[(i-1+2)%2]; setTab(p); document.getElementById(`tab-${p}`)?.focus(); }
