@@ -19,7 +19,7 @@
 ### Option A: Git-based deployment (easiest for updates)
 1. [ ] Initialize git: `git init`
 2. [ ] Create GitHub/GitLab/Bitbucket repo
-3. [ ] Push code: `git add . && git commit -m "Init" && git push`
+3. [ ] Push code: `git add . && git commit -m 'Initial commit: Plagiocephaly Assessment Tool' && git push`
 4. [ ] Go to [netlify.com](https://netlify.com)
 5. [ ] Click "Add new site" → "Import an existing project"
 6. [ ] Select repository
@@ -41,7 +41,7 @@
 ## ✅ Post-Deployment
 - [ ] Visit your live URL
 - [ ] Test all calculator functionality
-- [ ] Test localStorage (measurements persist)
+- [ ] Test all calculator functionality (measurements are session-only)
 - [ ] Verify links work (CHOA link, etc.)
 - [ ] Test on mobile device
 - [ ] Share with stakeholders!

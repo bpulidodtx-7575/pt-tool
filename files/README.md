@@ -8,7 +8,7 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 - ✅ **Cephalic Ratio** — Width-to-length ratio assessment for brachycephaly  
 - ✅ **Severity Scales** — CHOA severity levels with color-coded reference
 - ✅ **Age Guidelines** — Clinical recommendations by age group
-- ✅ **Local Storage** — All measurements saved locally, no data transmitted
+- ✅ **Session Only** — All measurements cleared on page refresh, no data transmitted
 - ✅ **Accessibility** — WCAG compliant with keyboard navigation
 - ✅ **Dark Mode** — Automatic theme support via OS preferences
 - ✅ **Responsive** — Optimized for desktop, tablet, and mobile
@@ -93,12 +93,13 @@ netlify deploy --prod
 ```
 .
 ├── index.html              # HTML entry point
-├── src/
-│   ├── main.jsx           # React app entry point
-│   └── PlagiocephalyTool.jsx  # Main component
+├── main.jsx               # React app entry point
+├── PlagiocephalyTool.jsx  # Main component (740 lines, all-in-one)
+├── styles.css             # Flat design system + dark mode
 ├── package.json           # Dependencies & scripts
 ├── vite.config.js        # Vite build configuration
 ├── netlify.toml          # Netlify deployment config
+├── DEPLOYMENT.md         # Deployment checklist
 └── README.md             # This file
 ```
 
@@ -113,10 +114,9 @@ netlify deploy --prod
 
 ## Performance
 
-- **Lighthouse Score**: 95+
-- **Bundle Size**: ~45KB gzipped (React + app code)
-- **First Paint**: <1s
-- **Time to Interactive**: <2s
+- **Small bundle**: React 18 + minimal dependencies
+- **Fast renders**: No router or state library overhead
+- **Code-split ready**: Architecture supports lazy loading if expanded
 
 ## Accessibility
 
@@ -128,7 +128,7 @@ netlify deploy --prod
 
 ## Privacy
 
-✅ **All data is stored locally** on the user's device  
+✅ **All data is session-only** — cleared on page refresh  
 ✅ No data transmitted to servers  
 ✅ No tracking or analytics cookies  
 ✅ HIPAA-friendly for clinical use
@@ -140,7 +140,6 @@ netlify deploy --prod
 ## Support
 
 For issues or questions:
-- Review the code comments (extensively documented)
 - Check browser console for errors
 - Test in a private/incognito window
 
