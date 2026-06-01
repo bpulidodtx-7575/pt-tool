@@ -4,8 +4,8 @@ import {
   toTenths,
   processCvai,
   processCr,
+  RANGES,
 } from "./calc";
-import { RANGES } from "./ranges";
 
 describe("validateMeasurement", () => {
   it("returns empty for blank input", () => {

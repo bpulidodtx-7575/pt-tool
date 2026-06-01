@@ -5,7 +5,18 @@
       "Bash(Get-ChildItem -Recurse -Depth 2 \"C:\\\\Users\\\\bryan\\\\OneDrive\\\\Downloads\\\\Plagiocephalytool\\\\files\")",
       "Bash(Select-Object FullName)",
       "Bash(Format-Table -AutoSize)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npm install *)",
+      "Bash(git commit -m ' *)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(python -c ' *)",
+      "Read(//c/Users/bryan/OneDrive/Downloads/**)",
+      "WebFetch(domain:www.mimosbabycare.com)",
+      "WebFetch(domain:www.youtube.com)"
     ]
   }
 }

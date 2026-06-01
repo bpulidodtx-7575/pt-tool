@@ -3,8 +3,7 @@
 // Responsive: mobile-first (600px tablet, 1000px desktop)
 // Touch targets: ≥48px on all interactive elements
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { RANGES } from "./ranges";
-import { validateMeasurement, processCvai, processCr, buildCvaiNote, buildCrNote, SEVERITY, CR_LEVELS, CHOA_PDF } from "./calc";
+import { validateMeasurement, processCvai, processCr, buildCvaiNote, buildCrNote, RANGES, SEVERITY, CR_LEVELS, CHOA_PDF } from "./calc";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const Ic = ({ size=16, d, children, ...p }) => (
