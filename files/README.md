@@ -21,14 +21,14 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 - **Typography**: Plus Jakarta Sans + JetBrains Mono (self-hosted, `files/fonts/`)
 - **PWA**: `vite-plugin-pwa` (offline app-shell)
 - **Testing**: Vitest + React Testing Library (jsdom)
-- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, format check, test, build on Node 18 & 20
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, format check, test, build on Node 20 & 22
 - **Deployment**: Netlify
 
 ## Local Development
 
 ### Prerequisites
 
-- Node.js 18.x or 20.x
+- Node.js 20 or newer
 - npm or yarn
 
 > **Note:** All source and `package.json` live under `files/`. Run every npm
@@ -131,7 +131,7 @@ files/
 ├── netlify.toml            # Netlify deployment config
 └── README.md               # This file
 
-.github/workflows/ci.yml    # CI: lint, format check, test, build (Node 18 & 20)
+.github/workflows/ci.yml    # CI: lint, format check, test, build (Node 20 & 22)
 ```
 
 ## Browser Support
@@ -177,7 +177,7 @@ For issues or questions:
 
 ## Environment
 
-Built and tested on Node 18+ with npm 8+.
+Built and tested on Node 20+ with npm 9+.
 
 ---
 

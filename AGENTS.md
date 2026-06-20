@@ -29,7 +29,7 @@ npm run preview
 - **PWA**: installable + offline app-shell caching via `vite-plugin-pwa` (`files/vite.config.js`)
 - **Test**: `npm test` (Vitest, jsdom) — `calc.test.js` (pure logic) + `PlagiocephalyTool.test.jsx` (component flows)
 - **Lint**: `npm run lint` (ESLint), **Format**: `npm run format` (Prettier)
-- **CI**: `.github/workflows/ci.yml` runs lint → format check → test → build on Node 18 & 20
+- **CI**: `.github/workflows/ci.yml` runs lint → format check → test → build on Node 20 & 22
 
 ## Deployment
 
@@ -39,7 +39,7 @@ npm run preview
 
 ## Notable quirks
 
-- Node 18.x or 20.x only (enforced via `package.json` `engines`)
+- Node 20+ only (enforced via `package.json` `engines`; the PWA build needs a global `crypto`, absent on Node 18)
 - Vite port is **3000** (not default 5173) — set in `vite.config.js`
 - All measurements are session-only (cleared on refresh) — no backend, no storage
 - Legal disclaimer modal shown on first load (must be acknowledged)
