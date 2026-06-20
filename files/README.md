@@ -21,7 +21,7 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 - **Typography**: Plus Jakarta Sans + JetBrains Mono (self-hosted, `files/fonts/`)
 - **PWA**: `vite-plugin-pwa` (offline app-shell)
 - **Testing**: Vitest + React Testing Library (jsdom)
-- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, format check, test, build on Node 20 & 22
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, typecheck, format check, test, build on Node 20 & 22
 - **Deployment**: Netlify
 
 ## Local Development
@@ -53,8 +53,9 @@ Visit `http://localhost:3000` in your browser.
 ```bash
 npm test          # Run the Vitest suite once
 npm run test:watch
-npm run lint      # ESLint
-npm run format    # Prettier (write)
+npm run lint       # ESLint
+npm run typecheck  # tsc --checkJs over calc.js (JSDoc types)
+npm run format     # Prettier (write)
 ```
 
 ### Build
@@ -121,7 +122,8 @@ files/
 ├── icons.jsx               # Inline SVG icon set
 ├── hooks.js                # useCopy, useScrolled
 ├── ErrorBoundary.jsx       # Graceful crash fallback
-├── calc.js                 # Pure calculation logic + reference data
+├── calc.js                 # Pure calculation logic + reference data (JSDoc-typed)
+├── jsconfig.json           # tsc --checkJs config for calc.js
 ├── calc.test.js            # Unit tests for calc.js
 ├── PlagiocephalyTool.test.jsx  # Component/UI tests
 ├── styles.css              # Flat design system + dark mode + @font-face
@@ -131,7 +133,7 @@ files/
 ├── netlify.toml            # Netlify deployment config
 └── README.md               # This file
 
-.github/workflows/ci.yml    # CI: lint, format check, test, build (Node 20 & 22)
+.github/workflows/ci.yml    # CI: lint, typecheck, format check, test, build (Node 20 & 22)
 ```
 
 ## Browser Support
