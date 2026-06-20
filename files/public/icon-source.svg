@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Plagiocephaly Assessment Tool">
+  <!-- Full-bleed accent background (no rounded corners — the OS applies the maskable shape).
+       The white mark sits inside the central safe zone so it is never clipped. -->
+  <rect width="512" height="512" fill="#f2673c"/>
+  <ellipse cx="256" cy="256" rx="150" ry="128" fill="none" stroke="#fff" stroke-width="28"/>
+  <line x1="150" y1="172" x2="362" y2="340" stroke="#fff" stroke-width="28" stroke-linecap="round"/>
+  <line x1="362" y1="172" x2="150" y2="340" stroke="#fff" stroke-width="20" stroke-linecap="round" stroke-dasharray="30 38"/>
+</svg>

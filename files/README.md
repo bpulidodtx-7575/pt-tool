@@ -12,7 +12,7 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 - ✅ **Accessibility** — WCAG compliant with keyboard navigation
 - ✅ **Dark Mode** — Automatic theme support via OS preferences
 - ✅ **Responsive** — Optimized for desktop, tablet, and mobile
-- ✅ **Offline / installable** — PWA with app-shell caching; self-hosted fonts (no CDN)
+- ✅ **Offline / installable** — PWA with app-shell caching, maskable + raster app icons; self-hosted fonts (no CDN)
 
 ## Tech Stack
 
@@ -128,7 +128,8 @@ files/
 ├── PlagiocephalyTool.test.jsx  # Component/UI tests
 ├── styles.css              # Flat design system + dark mode + @font-face
 ├── fonts/                  # Self-hosted woff2 fonts
-├── favicon.svg             # App icon
+├── public/                 # Static assets: favicon.svg + generated PWA icons (PNG)
+├── pwa-assets.config.js    # PWA icon generator config (npm run generate-pwa-assets)
 ├── vite.config.js          # Vite build + PWA + test config
 ├── netlify.toml            # Netlify deployment config
 └── README.md               # This file
