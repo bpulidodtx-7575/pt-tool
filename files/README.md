@@ -5,30 +5,40 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 ## Features
 
 - ✅ **CVAI Calculator** — Diagonal asymmetry assessment for plagiocephaly
-- ✅ **Cephalic Ratio** — Width-to-length ratio assessment for brachycephaly  
+- ✅ **Cephalic Ratio** — Width-to-length ratio assessment for brachycephaly
 - ✅ **Severity Scales** — CHOA severity levels with color-coded reference
 - ✅ **Age Guidelines** — Clinical recommendations by age group
 - ✅ **Session Only** — All measurements cleared on page refresh, no data transmitted
 - ✅ **Accessibility** — WCAG compliant with keyboard navigation
 - ✅ **Dark Mode** — Automatic theme support via OS preferences
 - ✅ **Responsive** — Optimized for desktop, tablet, and mobile
+- ✅ **Offline / installable** — PWA with app-shell caching; self-hosted fonts (no CDN)
 
 ## Tech Stack
 
 - **Frontend**: React 18 + Vite
 - **Styling**: CSS with oklch color space + CSS variables
-- **Typography**: Plus Jakarta Sans + JetBrains Mono
+- **Typography**: Plus Jakarta Sans + JetBrains Mono (self-hosted, `files/fonts/`)
+- **PWA**: `vite-plugin-pwa` (offline app-shell)
+- **Testing**: Vitest + React Testing Library (jsdom)
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, format check, test, build on Node 20 & 22
 - **Deployment**: Netlify
 
 ## Local Development
 
 ### Prerequisites
-- Node.js 18.x or 20.x
+
+- Node.js 20 or newer
 - npm or yarn
+
+> **Note:** All source and `package.json` live under `files/`. Run every npm
+> command from there.
 
 ### Setup
 
 ```bash
+cd files
+
 # Install dependencies
 npm install
 
@@ -37,6 +47,15 @@ npm run dev
 ```
 
 Visit `http://localhost:3000` in your browser.
+
+### Test & lint
+
+```bash
+npm test          # Run the Vitest suite once
+npm run test:watch
+npm run lint      # ESLint
+npm run format    # Prettier (write)
+```
 
 ### Build
 
@@ -53,6 +72,7 @@ npm run preview
 ### Option 1: Connect via Git (Recommended)
 
 1. **Push to GitHub/GitLab/Bitbucket**
+
    ```bash
    git init
    git add .
@@ -91,16 +111,27 @@ netlify deploy --prod
 ## Project Structure
 
 ```
-.
+files/
 ├── index.html              # HTML entry point
-├── main.jsx               # React app entry point
-├── PlagiocephalyTool.jsx  # Main component (740 lines, all-in-one)
-├── styles.css             # Flat design system + dark mode
-├── package.json           # Dependencies & scripts
-├── vite.config.js        # Vite build configuration
-├── netlify.toml          # Netlify deployment config
-├── DEPLOYMENT.md         # Deployment checklist
-└── README.md             # This file
+├── main.jsx                # React app entry point (wraps App in ErrorBoundary)
+├── PlagiocephalyTool.jsx   # App shell (header, tabs, sticky result)
+├── panels.jsx              # CvaiPanel, CrPanel, SeverityTable, AgeGuidelines
+├── components.jsx          # Toast, LegalDisclaimer, NumberInput, ResultCard, StickyResult …
+├── Diagrams.jsx            # SVG measurement diagrams + guide
+├── icons.jsx               # Inline SVG icon set
+├── hooks.js                # useCopy, useScrolled
+├── ErrorBoundary.jsx       # Graceful crash fallback
+├── calc.js                 # Pure calculation logic + reference data
+├── calc.test.js            # Unit tests for calc.js
+├── PlagiocephalyTool.test.jsx  # Component/UI tests
+├── styles.css              # Flat design system + dark mode + @font-face
+├── fonts/                  # Self-hosted woff2 fonts
+├── favicon.svg             # App icon
+├── vite.config.js          # Vite build + PWA + test config
+├── netlify.toml            # Netlify deployment config
+└── README.md               # This file
+
+.github/workflows/ci.yml    # CI: lint, format check, test, build (Node 20 & 22)
 ```
 
 ## Browser Support
@@ -140,12 +171,13 @@ netlify deploy --prod
 ## Support
 
 For issues or questions:
+
 - Check browser console for errors
 - Test in a private/incognito window
 
 ## Environment
 
-Built and tested on Node 18+ with npm 8+.
+Built and tested on Node 20+ with npm 9+.
 
 ---
 
