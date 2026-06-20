@@ -29,6 +29,7 @@ npm run preview
 - **PWA**: installable + offline app-shell caching via `vite-plugin-pwa` (`files/vite.config.js`)
 - **Test**: `npm test` (Vitest, jsdom) — `calc.test.js` (pure logic) + `PlagiocephalyTool.test.jsx` (component flows)
 - **Lint**: `npm run lint` (ESLint), **Format**: `npm run format` (Prettier)
+- **Typecheck**: `npm run typecheck` — `calc.js` is JSDoc-typed and checked with `tsc --checkJs` (`files/jsconfig.json`)
 - **CI**: `.github/workflows/ci.yml` runs lint → format check → test → build on Node 20 & 22
 
 ## Deployment

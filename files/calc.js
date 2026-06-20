@@ -1,3 +1,76 @@
+// ─── Type definitions (JSDoc) ─────────────────────────────────────────────────
+// calc.js is the clinically meaningful logic. It is JSDoc-typed and checked in CI
+// via `npm run typecheck` (tsc --checkJs, see jsconfig.json). Comments only — no
+// runtime effect.
+
+/**
+ * @typedef {Object} Range
+ * @property {number} min
+ * @property {number} max
+ * @property {string} label
+ */
+
+/**
+ * @typedef {Object} ValidationResult
+ * @property {boolean} ok
+ * @property {number|null} value
+ * @property {string|null} error
+ * @property {boolean} [empty]
+ * @property {string|null} [warning]
+ */
+
+/**
+ * @typedef {Object} CvaiResult
+ * @property {number} displayCvai
+ * @property {number} sevIdx  Index into SEVERITY (0-4).
+ */
+
+/** @typedef {"ortho" | "watch" | "ok"} CrKey */
+
+/**
+ * @typedef {Object} CrResult
+ * @property {CrKey} key
+ * @property {number} displayCr
+ */
+
+/**
+ * @typedef {Object} SeverityLevel
+ * @property {number} level
+ * @property {string} range
+ * @property {string} rangeFull
+ * @property {string} label
+ * @property {string} sevVar
+ * @property {string[]} presentation
+ * @property {string} recommendation
+ * @property {string} referral
+ */
+
+/**
+ * @typedef {Object} CrLevel
+ * @property {string} label
+ * @property {string} short
+ * @property {string} rangeFull
+ * @property {string} sevVar
+ * @property {string} detail
+ * @property {string[]} [presentation]
+ */
+
+/** Shape passed to buildCrNote: a CR_LEVELS entry merged with its key. */
+/**
+ * @typedef {Object} CrNoteInput
+ * @property {CrKey} key
+ * @property {string} label
+ * @property {string} rangeFull
+ * @property {string} detail
+ */
+
+/**
+ * Validate a raw caliper measurement string.
+ * @param {string} raw
+ * @param {string} label
+ * @param {Range} [range]
+ * @returns {ValidationResult}
+ */
 export function validateMeasurement(raw, label, range) {
   if (raw === "" || raw == null) return { ok: false, value: null, error: null, empty: true };
   const n = parseFloat(raw);
@@ -10,8 +83,19 @@ export function validateMeasurement(raw, label, range) {
   return { ok: true, value: n, error: null, empty: false, warning };
 }
 
+/**
+ * Round millimetres to tenths (integer math avoids float drift per CHOA).
+ * @param {number} v
+ * @returns {number}
+ */
 export const toTenths = (v) => Math.round(v * 10);
 
+/**
+ * Compute CVAI and its CHOA severity bucket.
+ * @param {number} a  Longer diagonal (mm).
+ * @param {number} b  Shorter diagonal (mm).
+ * @returns {CvaiResult | null}
+ */
 export function processCvai(a, b) {
   if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) return null;
   const a10 = toTenths(a),
@@ -19,6 +103,7 @@ export function processCvai(a, b) {
   const diff = Math.abs(a10 - b10),
     max = Math.max(a10, b10);
   if (max === 0) return null;
+  /** @type {number} */
   let sevIdx;
   if (diff * 200 < 7 * max) sevIdx = 0;
   else if (diff * 16 < max) sevIdx = 1;
@@ -29,6 +114,12 @@ export function processCvai(a, b) {
   return Number.isFinite(displayCvai) ? { displayCvai, sevIdx } : null;
 }
 
+/**
+ * Compute Cephalic Ratio and its CHOA bucket.
+ * @param {number} ml  Medial-lateral width (mm).
+ * @param {number} ap  Anterior-posterior length (mm).
+ * @returns {CrResult | null}
+ */
 export function processCr(ml, ap) {
   if (!Number.isFinite(ml) || !Number.isFinite(ap) || ml <= 0 || ap <= 0) return null;
   const ml10 = toTenths(ml),
@@ -40,11 +131,16 @@ export function processCr(ml, ap) {
   return Number.isFinite(displayCr) ? { key, displayCr } : null;
 }
 
+/**
+ * Formatted local timestamp for assessment notes.
+ * @returns {string}
+ */
 export function fmtTimestamp() {
   const n = new Date();
   return `${n.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}    ${n.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}`;
 }
 
+/** @type {SeverityLevel[]} */
 export const SEVERITY = [
   {
     level: 1,
@@ -113,6 +209,7 @@ export const SEVERITY = [
   },
 ];
 
+/** @type {Record<CrKey, CrLevel>} */
 export const CR_LEVELS = {
   ortho: {
     label: "Orthotic evaluation recommended",
@@ -142,6 +239,7 @@ export const CR_LEVELS = {
   },
 };
 
+/** @type {Record<"diagA" | "diagB" | "crMl" | "crAp", Range>} */
 export const RANGES = {
   diagA: { min: 80, max: 200, label: "Typical: 80–200 mm" },
   diagB: { min: 80, max: 200, label: "Typical: 80–200 mm" },
@@ -152,6 +250,14 @@ export const RANGES = {
 export const CHOA_PDF =
   "https://pediatricapta.org/special-interest-groups/HB/ORTH_961942_PlagiocephalyScale_BWInfo.pdf";
 
+/**
+ * Build a structured plagiocephaly assessment note for the EMR.
+ * @param {number} cvai
+ * @param {SeverityLevel} sev
+ * @param {string} rawA
+ * @param {string} rawB
+ * @returns {string}
+ */
 export function buildCvaiNote(cvai, sev, rawA, rawB) {
   return [
     "PLAGIOCEPHALY ASSESSMENT",
@@ -175,6 +281,14 @@ export function buildCvaiNote(cvai, sev, rawA, rawB) {
   ].join("\n");
 }
 
+/**
+ * Build a structured brachycephaly assessment note for the EMR.
+ * @param {number} cr
+ * @param {CrNoteInput} res
+ * @param {string} rawMl
+ * @param {string} rawAp
+ * @returns {string}
+ */
 export function buildCrNote(cr, res, rawMl, rawAp) {
   const ref =
     res.key === "ortho"
