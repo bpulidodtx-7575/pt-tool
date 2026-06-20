@@ -27,6 +27,7 @@ npm run preview
 - **Styling**: `files/styles.css` — CSS variables + oklch color space, dark mode via `prefers-color-scheme`
 - **Fonts**: Plus Jakarta Sans + JetBrains Mono are **self-hosted** (`files/fonts/*.woff2`, `@font-face` in `styles.css`) — no CDN, works offline
 - **PWA**: installable + offline app-shell caching via `vite-plugin-pwa` (`files/vite.config.js`)
+  - App icons live in `files/public/` (PNG 192/512 + maskable + apple-touch-180), generated from `public/icon-source.svg` via `npm run generate-pwa-assets` (`pwa-assets.config.js`) and **committed**; regenerate only when the source icon changes (needs `sharp`, a devDep)
 - **Test**: `npm test` (Vitest, jsdom) — `calc.test.js` (pure logic) + `PlagiocephalyTool.test.jsx` (component flows)
 - **Lint**: `npm run lint` (ESLint), **Format**: `npm run format` (Prettier)
 - **Typecheck**: `npm run typecheck` — `calc.js` is JSDoc-typed and checked with `tsc --checkJs` (`files/jsconfig.json`)

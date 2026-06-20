@@ -7,11 +7,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg"],
+      includeAssets: ["favicon.svg", "apple-touch-icon-180x180.png"],
       // App shell only — there is no backend or patient data to sync, so we
       // precache the build output and serve it offline at the bedside.
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
       },
       manifest: {
         name: "Plagiocephaly Assessment Tool",
@@ -21,12 +21,17 @@ export default defineConfig({
         background_color: "#ffffff",
         display: "standalone",
         start_url: "/",
+        // Raster set generated from public/icon-source.svg via
+        // `npm run generate-pwa-assets` (see pwa-assets.config.js).
         icons: [
+          { src: "favicon.svg", sizes: "any", type: "image/svg+xml" },
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" },
           {
-            src: "favicon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "any maskable",
+            src: "maskable-icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
           },
         ],
       },
