@@ -1,8 +1,37 @@
-import { defineConfig } from "vite"
-import react from "@vitejs/plugin-react"
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.svg"],
+      // App shell only — there is no backend or patient data to sync, so we
+      // precache the build output and serve it offline at the bedside.
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,woff2}"],
+      },
+      manifest: {
+        name: "Plagiocephaly Assessment Tool",
+        short_name: "Plagiocephaly",
+        description: "CHOA Plagiocephaly Assessment Tool — CVAI and Cephalic Ratio clinical reference.",
+        theme_color: "#f2673c",
+        background_color: "#ffffff",
+        display: "standalone",
+        start_url: "/",
+        icons: [
+          {
+            src: "favicon.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any maskable",
+          },
+        ],
+      },
+    }),
+  ],
   build: {
     outDir: "dist",
     sourcemap: false,
@@ -15,6 +44,8 @@ export default defineConfig({
   },
   test: {
     include: ["**/*.test.js", "**/*.test.jsx"],
-    environment: "node",
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["./test-setup.js"],
   },
-})
+});

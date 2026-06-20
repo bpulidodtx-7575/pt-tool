@@ -15,13 +15,21 @@ npm run preview
 ## Stack & structure
 
 - **React 18 + Vite 5** — single-page SPA, no router, no state library
-- **Single component** — `files/PlagiocephalyTool.jsx` (~700 lines, all-in-one)
-- **Core logic** extracted to `files/calc.js` + `files/ranges.js` (testable pure functions)
-- **Entrypoint**: `files/index.html` → `files/main.jsx` → `PlagiocephalyTool.jsx`
+- **Component modules** (all under `files/`):
+  - `PlagiocephalyTool.jsx` — the `App` shell (header, tabs, sticky result)
+  - `panels.jsx` — `CvaiPanel`, `CrPanel`, `SeverityTable`, `AgeGuidelines`
+  - `components.jsx` — `Toast`, `LegalDisclaimer`, `NumberInput`, `AlertBox`, `ResultCard`, `StickyResult`
+  - `Diagrams.jsx` — SVG diagrams + the inline/sidebar measurement guide
+  - `icons.jsx` — inline SVG icon set · `hooks.js` — `useCopy`, `useScrolled`
+  - `ErrorBoundary.jsx` — wraps `<App/>` in `main.jsx` for a graceful crash fallback
+- **Core logic** in `files/calc.js` — pure, testable functions (`processCvai`, `processCr`, `validateMeasurement`) plus reference data (`SEVERITY`, `CR_LEVELS`, `RANGES`)
+- **Entrypoint**: `files/index.html` → `files/main.jsx` → `ErrorBoundary` → `PlagiocephalyTool.jsx`
 - **Styling**: `files/styles.css` — CSS variables + oklch color space, dark mode via `prefers-color-scheme`
-- **Fonts**: Plus Jakarta Sans + JetBrains Mono loaded from Google Fonts CDN in `index.html` (requires internet)
-- **Test**: `npm test` (Vitest) — 19 unit tests for calculation logic
+- **Fonts**: Plus Jakarta Sans + JetBrains Mono are **self-hosted** (`files/fonts/*.woff2`, `@font-face` in `styles.css`) — no CDN, works offline
+- **PWA**: installable + offline app-shell caching via `vite-plugin-pwa` (`files/vite.config.js`)
+- **Test**: `npm test` (Vitest, jsdom) — `calc.test.js` (pure logic) + `PlagiocephalyTool.test.jsx` (component flows)
 - **Lint**: `npm run lint` (ESLint), **Format**: `npm run format` (Prettier)
+- **CI**: `.github/workflows/ci.yml` runs lint → format check → test → build on Node 18 & 20
 
 ## Deployment
 

@@ -1,16 +1,13 @@
 import { describe, it, expect } from "vitest";
-import {
-  validateMeasurement,
-  toTenths,
-  processCvai,
-  processCr,
-  RANGES,
-} from "./calc";
+import { validateMeasurement, toTenths, processCvai, processCr, RANGES } from "./calc";
 
 describe("validateMeasurement", () => {
   it("returns empty for blank input", () => {
     expect(validateMeasurement("", "Test", RANGES.diagA)).toEqual({
-      ok: false, value: null, error: null, empty: true,
+      ok: false,
+      value: null,
+      error: null,
+      empty: true,
     });
   });
 
@@ -102,6 +99,28 @@ describe("processCvai", () => {
     const r2 = processCvai(100, 120);
     expect(r1.displayCvai).toBeCloseTo(r2.displayCvai, 5);
     expect(r1.sevIdx).toBe(r2.sevIdx);
+  });
+
+  // The severity buckets are computed with obscure integer-tenths comparisons
+  // (calc.js). These lock down the exact transition points at 3.5 / 6.25 /
+  // 8.75 / 11.0% so a future edit to that arithmetic can't silently shift a
+  // patient into the wrong CHOA level. A is fixed at 100 mm (1000 tenths).
+  describe("severity boundaries (A = 100 mm)", () => {
+    const cases = [
+      [96.6, 3.4, 0], // just below 3.5 → Level 1
+      [96.5, 3.5, 1], // at 3.5 → Level 2
+      [93.8, 6.2, 1], // just below 6.25 → Level 2
+      [93.7, 6.3, 2], // at/above 6.25 → Level 3
+      [91.3, 8.7, 2], // just below 8.75 → Level 3
+      [91.2, 8.8, 3], // at/above 8.75 → Level 4
+      [89.0, 11.0, 3], // at 11.0 → Level 4
+      [88.9, 11.1, 4], // above 11.0 → Level 5
+    ];
+    it.each(cases)("B=%f mm → CVAI %f%% → sevIdx %i", (b, expectedCvai, expectedIdx) => {
+      const r = processCvai(100, b);
+      expect(r.displayCvai).toBeCloseTo(expectedCvai, 1);
+      expect(r.sevIdx).toBe(expectedIdx);
+    });
   });
 });
 
