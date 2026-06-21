@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Toast, LegalDisclaimer, NumberInput, AlertBox, ResultCard, StickyResult } from "./components";
+import { Toast, LegalDisclaimer, NumberInput, AlertBox, ResultCard, StickyResult, ThemeToggle } from "./components";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -10,6 +10,36 @@ afterEach(() => vi.restoreAllMocks());
 function spyClipboard() {
   return vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue(undefined);
 }
+
+describe("ThemeToggle", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    delete document.documentElement.dataset.theme;
+  });
+
+  it("starts in System mode with an accessible, descriptive label", () => {
+    render(<ThemeToggle />);
+    const btn = screen.getByRole("button", { name: /Theme: System/i });
+    expect(btn).toHaveAttribute("title", expect.stringMatching(/switch to light/i));
+  });
+
+  it("cycles System -> Light -> Dark on click", async () => {
+    const user = userEvent.setup();
+    render(<ThemeToggle />);
+    await user.click(screen.getByRole("button", { name: /Theme: System/i }));
+    expect(screen.getByRole("button", { name: /Theme: Light/i })).toBeInTheDocument();
+    expect(document.documentElement.dataset.theme).toBe("light");
+    await user.click(screen.getByRole("button", { name: /Theme: Light/i }));
+    expect(screen.getByRole("button", { name: /Theme: Dark/i })).toBeInTheDocument();
+    expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+
+  it("honors an existing saved preference", () => {
+    sessionStorage.setItem("pt-theme", "dark");
+    render(<ThemeToggle />);
+    expect(screen.getByRole("button", { name: /Theme: Dark/i })).toBeInTheDocument();
+  });
+});
 
 describe("Toast", () => {
   it("is a polite live region that hides until visible", () => {
