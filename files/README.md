@@ -22,8 +22,8 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 - **Styling**: CSS with oklch color space + CSS variables
 - **Typography**: Plus Jakarta Sans + JetBrains Mono (self-hosted, `files/fonts/`)
 - **PWA**: `vite-plugin-pwa` (offline app-shell)
-- **Testing**: Vitest + React Testing Library (jsdom), v8 coverage (80% threshold), axe accessibility checks (`vitest-axe`)
-- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, typecheck, format check, test + coverage, build on Node 20 & 22
+- **Testing**: Vitest + React Testing Library (jsdom), v8 coverage (80% threshold), axe accessibility checks (`vitest-axe`), property-based tests (`fast-check`), and real-browser E2E (`@playwright/test`)
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, typecheck, format check, test + coverage, build on Node 20 & 22; plus a separate Playwright E2E job
 - **Deployment**: Netlify
 
 ## Local Development
@@ -53,13 +53,16 @@ Visit `http://localhost:3000` in your browser.
 ### Test & lint
 
 ```bash
-npm test           # Run the Vitest suite once
+npm test           # Run the Vitest suite once (unit + property-based)
 npm run test:watch
 npm run test:coverage  # Vitest with v8 coverage (enforces 80% thresholds)
+npm run test:e2e   # Playwright E2E (real browser; auto-builds + previews)
 npm run lint       # ESLint
 npm run typecheck  # tsc --checkJs over calc.js (JSDoc types)
 npm run format     # Prettier (write)
 ```
+
+> First E2E run only: `npx playwright install chromium` to fetch the browser.
 
 ### Build
 
@@ -128,6 +131,7 @@ files/
 ├── calc.js                 # Pure calculation logic + reference data (JSDoc-typed)
 ├── jsconfig.json           # tsc --checkJs config for calc.js
 ├── calc.test.js            # Unit tests for calc.js
+├── calc.property.test.js   # Property-based tests (fast-check) for calc.js invariants
 ├── PlagiocephalyTool.test.jsx  # App-level flow tests
 ├── components.test.jsx     # Toast, NumberInput, ResultCard, StickyResult … tests
 ├── panels.test.jsx         # SeverityTable + AgeGuidelines tests
@@ -135,6 +139,8 @@ files/
 ├── ErrorBoundary.test.jsx  # Error fallback tests
 ├── a11y.test.jsx           # Automated accessibility checks (axe)
 ├── test-setup.js           # jsdom polyfills + axe matcher
+├── e2e/                    # Playwright E2E specs (*.spec.js) — real browser
+├── playwright.config.js    # Playwright config (Chromium + Pixel 5)
 ├── styles.css              # Flat design system + dark mode + @font-face
 ├── fonts/                  # Self-hosted woff2 fonts
 ├── public/                 # Static assets: favicon.svg + generated PWA icons (PNG)
