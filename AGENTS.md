@@ -36,7 +36,8 @@ npm run preview
 - **Lint**: `npm run lint` (ESLint), **Format**: `npm run format` (Prettier)
 - **Typecheck**: `npm run typecheck` — `calc.js` is JSDoc-typed and checked with `tsc --checkJs` (`files/jsconfig.json`)
 - **Lighthouse budgets**: `npm run lhci` (`@lhci/cli`, config in `files/lighthouserc.json`) audits the built `dist/` (`staticDistDir`, median of 3 runs) against category score budgets — perf ≥0.9 (warn), a11y/best-practices/SEO ≥0.95 (error). PWA category omitted (removed in Lighthouse 12). Needs Chrome; verified in CI (sandbox has no Chrome). Reports in `files/.lighthouseci/` (gitignored).
-- **CI**: `.github/workflows/ci.yml` — `build-and-test` job runs lint → typecheck → format check → test (with coverage) → build on Node 20 & 22; a separate `e2e` job installs Chromium and runs Playwright (uploads the HTML report as an artifact on failure); a `lighthouse` job builds and runs the Lighthouse budgets (uploads its report artifact always)
+- **Security scanning**: a `security` job in `ci.yml` runs `npm audit --omit=dev --audit-level=high` as a **blocking** gate (only `react`/`react-dom` ship, so production deps are the gate) plus a non-blocking full-tree `npm audit` for triage of dev-tooling advisories. CodeQL static analysis runs from a separate `.github/workflows/codeql.yml` (javascript-typescript; push to main, PRs into main, weekly cron) — alerts land in the repo Security tab. Dependabot (`.github/dependabot.yml`) covers npm + Actions updates.
+- **CI**: `.github/workflows/ci.yml` — `build-and-test` job runs lint → typecheck → format check → test (with coverage) → build on Node 20 & 22; a separate `e2e` job installs Chromium and runs Playwright (uploads the HTML report as an artifact on failure); a `lighthouse` job builds and runs the Lighthouse budgets (uploads its report artifact always); a `security` job runs the `npm audit` gate. CodeQL runs as its own workflow.
 
 ## Deployment
 
