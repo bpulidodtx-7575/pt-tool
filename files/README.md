@@ -23,7 +23,8 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 - **Typography**: Plus Jakarta Sans + JetBrains Mono (self-hosted, `files/fonts/`)
 - **PWA**: `vite-plugin-pwa` (offline app-shell)
 - **Testing**: Vitest + React Testing Library (jsdom), v8 coverage (80% threshold), axe accessibility checks (`vitest-axe`), property-based tests (`fast-check`), and real-browser E2E (`@playwright/test`)
-- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, typecheck, format check, test + coverage, build on Node 20 & 22; plus separate Playwright E2E and Lighthouse-budget jobs
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, typecheck, format check, test + coverage, build on Node 20 & 22; plus separate Playwright E2E, Lighthouse-budget, and `npm audit` security jobs
+- **Security scanning**: `npm audit` gate (production deps, high+) and CodeQL static analysis (`.github/workflows/codeql.yml`); Dependabot for npm + Actions updates
 - **Deployment**: Netlify
 
 ## Local Development
