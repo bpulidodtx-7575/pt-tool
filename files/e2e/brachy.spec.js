@@ -4,7 +4,8 @@ import { test, expect } from "@playwright/test";
 test.describe("Brachycephaly tool — Cephalic Ratio flow", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: /I understand/i }).click();
+    // CTA accessible name = its aria-label ("Acknowledge disclaimer …").
+    await page.getByRole("button", { name: /Acknowledge disclaimer/i }).click();
     await page.getByRole("tab", { name: /Brachycephaly/i }).click();
   });
 

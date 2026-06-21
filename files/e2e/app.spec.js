@@ -4,8 +4,9 @@ import { test, expect } from "@playwright/test";
 test.describe("Plagiocephaly tool — CVAI flow", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // The legal disclaimer gates the app until acknowledged.
-    await page.getByRole("button", { name: /I understand/i }).click();
+    // The legal disclaimer gates the app until acknowledged. The CTA's accessible
+    // name comes from its aria-label ("Acknowledge disclaimer …"), not its visible text.
+    await page.getByRole("button", { name: /Acknowledge disclaimer/i }).click();
   });
 
   test("auto-focuses the first measurement field after the disclaimer", async ({ page }) => {
