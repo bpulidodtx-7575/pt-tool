@@ -100,6 +100,20 @@ const fmtMm = (raw) => (toTenths(parseFloat(raw)) / 10).toFixed(1);
 
 /**
  * Compute CVAI and its CHOA severity bucket.
+ *
+ * Severity bands (CHOA Plagiocephaly Severity Scale — see CHOA_PDF):
+ *   Level 1  CVAI < 3.5%      Level 2  3.5–6.25%   Level 3  6.25–8.75%
+ *   Level 4  8.75–11.0%       Level 5  > 11.0%
+ *
+ * The buckets are compared with integer-tenths cross-multiplication (no float
+ * division) to avoid rounding drift per CHOA. Each comparison below is the exact
+ * integer form of `CVAI = diff/max*100` against its documented %% threshold:
+ *   diff*200 <  7*max  ⟺  diff/max <  7/200 = 0.0350  ⟺  CVAI <  3.5%
+ *   diff*16  <    max  ⟺  diff/max <  1/16  = 0.0625  ⟺  CVAI <  6.25%
+ *   diff*400 < 35*max  ⟺  diff/max < 35/400 = 0.0875  ⟺  CVAI <  8.75%
+ *   diff*100 <= 11*max ⟺  diff/max <= 11/100 = 0.1100 ⟺  CVAI <= 11.0%
+ * Each shared edge (3.5/6.25/8.75) falls into the higher band; 11.0% falls into
+ * Level 4 (the `<=`), so only CVAI strictly > 11.0% is Level 5.
  * @param {number} a  Longer diagonal (mm).
  * @param {number} b  Shorter diagonal (mm).
  * @returns {CvaiResult | null}
@@ -113,17 +127,30 @@ export function processCvai(a, b) {
   if (max === 0) return null;
   /** @type {number} */
   let sevIdx;
-  if (diff * 200 < 7 * max) sevIdx = 0;
-  else if (diff * 16 < max) sevIdx = 1;
-  else if (diff * 400 < 35 * max) sevIdx = 2;
-  else if (diff * 100 <= 11 * max) sevIdx = 3;
-  else sevIdx = 4;
+  if (diff * 200 < 7 * max)
+    sevIdx = 0; // CVAI < 3.5%   → Level 1
+  else if (diff * 16 < max)
+    sevIdx = 1; // CVAI < 6.25%  → Level 2
+  else if (diff * 400 < 35 * max)
+    sevIdx = 2; // CVAI < 8.75%  → Level 3
+  else if (diff * 100 <= 11 * max)
+    sevIdx = 3; // CVAI <= 11.0% → Level 4
+  else sevIdx = 4; //                            CVAI > 11.0%  → Level 5
   const displayCvai = (diff / max) * 100;
   return Number.isFinite(displayCvai) ? { displayCvai, sevIdx } : null;
 }
 
 /**
  * Compute Cephalic Ratio and its CHOA bucket.
+ *
+ * Thresholds (CHOA — see CHOA_PDF): CR > 90 → orthotic eval; CR 85–90 → monitor;
+ * CR < 85 → normal. Compared via integer cross-multiplication of `CR = ml/ap*100`
+ * (cr100 = ml10*100):
+ *   cr100 >  90*ap10  ⟺  CR >  90  → "ortho"
+ *   cr100 >= 85*ap10  ⟺  CR >= 85  → "watch"   (so exactly 85 and 90 are "watch")
+ *   otherwise         ⟺  CR <  85  → "ok"
+ * Note the strict `>` at 90 and inclusive `>=` at 85: the normal band is CR < 85,
+ * matching CR_LEVELS.ok.rangeFull ("CR < 85") — guarded by the provenance tests.
  * @param {number} ml  Medial-lateral width (mm).
  * @param {number} ap  Anterior-posterior length (mm).
  * @returns {CrResult | null}
@@ -148,6 +175,11 @@ export function fmtTimestamp() {
   return `${n.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}    ${n.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}`;
 }
 
+// Reference data below is the clinical source of truth shown to clinicians. The
+// numeric band edges in each `range`/`rangeFull` MUST stay in lockstep with the
+// thresholds encoded in processCvai / processCr above (authority: the CHOA
+// Plagiocephaly Severity Scale, CHOA_PDF). The "clinical constants ↔ legend
+// provenance" tests in calc.test.js fail if the two ever drift apart.
 /** @type {SeverityLevel[]} */
 export const SEVERITY = [
   {

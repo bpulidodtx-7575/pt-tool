@@ -16,6 +16,34 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 - ✅ **Responsive** — Optimized for desktop, tablet, and mobile
 - ✅ **Offline / installable** — PWA with app-shell caching, maskable + raster app icons; self-hosted fonts (no CDN)
 
+## Clinical constants & provenance
+
+All severity bands and thresholds come from the **CHOA Plagiocephaly Severity Scale**
+([source PDF](https://pediatricapta.org/special-interest-groups/HB/ORTH_961942_PlagiocephalyScale_BWInfo.pdf),
+linked in-app as `CHOA_PDF`). They live in one place — `files/calc.js` (`SEVERITY`,
+`CR_LEVELS`) — and the comparison arithmetic is documented there with its exact derivation.
+
+**CVAI = |A − B| / max(A, B) × 100** — `A` = longer diagonal, `B` = shorter:
+
+| Level                    | CVAI band    | At a shared edge                          |
+| ------------------------ | ------------ | ----------------------------------------- |
+| 1 — Within normal limits | < 3.5%       | 3.5% → Level 2                            |
+| 2 — Mild                 | 3.5 – 6.25%  | 6.25% → Level 3                           |
+| 3 — Moderate             | 6.25 – 8.75% | 8.75% → Level 4                           |
+| 4 — Severe               | 8.75 – 11.0% | 11.0% → Level 4 (only > 11.0% is Level 5) |
+| 5 — Very severe          | > 11.0%      | —                                         |
+
+**Cephalic Ratio = M/L ÷ A/P × 100** — `> 90` orthotic eval · `85 – 90` monitor ·
+`< 85` normal (exactly 85 and 90 are "monitor").
+
+To avoid floating-point drift, the buckets are decided with integer-tenths
+cross-multiplication; each comparison is annotated in `calc.js` with the `%` threshold it
+encodes. The **`clinical constants ↔ legend provenance`** tests in `files/calc.test.js`
+derive the edges from this reference data and fail CI if the displayed bands ever drift
+from the arithmetic.
+
+> This is a reference tool, not a diagnostic device.
+
 ## Tech Stack
 
 - **Frontend**: React 18 + Vite
