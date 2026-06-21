@@ -37,7 +37,14 @@ npm run preview
 
 - **Netlify** — config at `files/netlify.toml`
 - Build: `npm run build`, publish dir: `dist`
-- SPA redirect `/* → /index.html`, immutable cache for `dist/*`
+- SPA redirect `/* → /index.html`; immutable cache for hashed assets under `/assets/*`
+- **Security headers** live in `files/netlify.toml` (CSP, `X-Frame-Options`,
+  `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`). The CSP keeps
+  `script-src 'self'` (no inline/CDN scripts) but needs `style-src 'unsafe-inline'`
+  for React's inline `style={{…}}` attributes — keep that in mind before adding any
+  external script/font/image source.
+- **Dependency updates**: `.github/dependabot.yml` opens weekly npm (`/files`) +
+  github-actions PRs; routine devDependency bumps are grouped into one PR.
 
 ## Notable quirks
 
