@@ -55,4 +55,5 @@ npm run preview
 - All measurements are session-only (cleared on refresh) — no backend, no storage
 - Legal disclaimer modal shown on first load (must be acknowledged)
 - Touch targets ≥48px enforced everywhere, iOS-safe 16px font on inputs
+- `NumberInput` (`components.jsx`) auto-focuses the first field after the disclaimer, has a per-field clear (×) button, and takes a `status` prop (`"error"`/`"warn"`) that the panels derive via `fieldStatus(validateMeasurement(...))` to color the border (`is-error`/`is-warn` + `aria-invalid`)
 - **Keyboard shortcuts** (active after the disclaimer; `useKeyboardShortcuts` in `hooks.js`): `?` help dialog, `t` switch calculator, `c` copy note, `n` new patient, `Esc` close help. Action keys are non-numeric so they fire even while a number input is focused; the handler ignores `Ctrl/Meta/Alt` combos and real text fields. Discoverable via the header keyboard button (`ShortcutsHelp` modal).

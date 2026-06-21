@@ -141,6 +141,36 @@ describe("NumberInput", () => {
     await user.keyboard("{Enter}");
     expect(b).toHaveFocus();
   });
+
+  it("shows a clear button only when a value is present", () => {
+    const { rerender } = render(<NumberInput id="x" label="Diagonal A" value="" onChange={() => {}} />);
+    expect(screen.queryByRole("button", { name: /Clear Diagonal A/i })).not.toBeInTheDocument();
+    rerender(<NumberInput id="x" label="Diagonal A" value="100" onChange={() => {}} />);
+    expect(screen.getByRole("button", { name: /Clear Diagonal A/i })).toBeInTheDocument();
+  });
+
+  it("clears the field and refocuses the input when the clear button is clicked", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<NumberInput id="x" label="Diagonal A" value="100" onChange={onChange} />);
+    await user.click(screen.getByRole("button", { name: /Clear Diagonal A/i }));
+    expect(onChange).toHaveBeenCalledWith("");
+    expect(screen.getByLabelText(/Diagonal A in millimeters/i)).toHaveFocus();
+  });
+
+  it("reflects an error status with aria-invalid + is-error", () => {
+    render(<NumberInput id="x" label="Diagonal A" value="0" onChange={() => {}} status="error" />);
+    const input = screen.getByLabelText(/Diagonal A in millimeters/i);
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveClass("is-error");
+  });
+
+  it("reflects a warn status without marking the field invalid", () => {
+    render(<NumberInput id="x" label="Diagonal A" value="300" onChange={() => {}} status="warn" />);
+    const input = screen.getByLabelText(/Diagonal A in millimeters/i);
+    expect(input).not.toHaveAttribute("aria-invalid");
+    expect(input).toHaveClass("is-warn");
+  });
 });
 
 describe("AlertBox", () => {

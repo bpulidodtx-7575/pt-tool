@@ -14,6 +14,9 @@ import { NumberInput, AlertBox, ResultCard } from "./components";
 import { InlineGuide } from "./Diagrams";
 import { IcChevron } from "./icons";
 
+// Per-field border state: hard error (invalid) vs. out-of-range warning.
+const fieldStatus = (v) => (v.empty ? null : !v.ok ? "error" : v.warning ? "warn" : null);
+
 // ─── Calculator panels (inputs + validation + result — no diagram) ────────────
 export function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
   const vA = validateMeasurement(a, "Diagonal A", RANGES.diagA);
@@ -43,6 +46,7 @@ export function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
           value={a}
           onChange={setA}
           nextId="cvai-b"
+          status={fieldStatus(vA)}
         />
         <NumberInput
           id="cvai-b"
@@ -52,6 +56,7 @@ export function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
           swatchVar="var(--ink-3)"
           value={b}
           onChange={setB}
+          status={fieldStatus(vB)}
         />
       </div>
       {/* Collapsible guide — mobile only, hidden on tablet+ via CSS */}
@@ -108,6 +113,7 @@ export function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
           value={ml}
           onChange={setMl}
           nextId="cr-ap"
+          status={fieldStatus(vMl)}
         />
         <NumberInput
           id="cr-ap"
@@ -117,6 +123,7 @@ export function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
           swatchVar="var(--ink-3)"
           value={ap}
           onChange={setAp}
+          status={fieldStatus(vAp)}
         />
       </div>
       <InlineGuide tab="cr" />

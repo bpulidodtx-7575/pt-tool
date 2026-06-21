@@ -651,6 +651,52 @@ a:focus-visible {
   border-color: var(--accent);
   box-shadow: var(--focus);
 }
+/* Reserve room for the clear (×) button + unit when a value is present. */
+.input-wrap input.clearable {
+  padding-right: 72px;
+}
+/* Per-field validation state — persists through hover/focus. */
+.input-wrap input.is-error,
+.input-wrap input.is-error:hover,
+.input-wrap input.is-error:focus-visible {
+  border-color: var(--sev-4);
+}
+.input-wrap input.is-error:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sev-4) 22%, transparent);
+}
+.input-wrap input.is-warn,
+.input-wrap input.is-warn:hover,
+.input-wrap input.is-warn:focus-visible {
+  border-color: var(--sev-3);
+}
+.input-wrap input.is-warn:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sev-3) 22%, transparent);
+}
+.input-clear {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.input-clear:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.input-clear:focus-visible {
+  outline: none;
+  color: var(--ink);
+  box-shadow: var(--focus);
+}
 .input-wrap .unit {
   position: absolute;
   right: 14px;

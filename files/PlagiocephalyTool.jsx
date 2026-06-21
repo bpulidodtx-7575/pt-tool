@@ -39,6 +39,14 @@ export default function App() {
     document.title = "Plagiocephaly Assessment Tool";
   }, []);
 
+  // Move focus to the first measurement field once the disclaimer is dismissed,
+  // so the clinician can start typing without an extra tap. Runs only on that
+  // transition (not on tab switches).
+  useEffect(() => {
+    if (disclaimerDone) document.getElementById(tab === "cvai" ? "cvai-a" : "cr-ml")?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disclaimerDone]);
+
   const clearAll = () => {
     setCvaiA("");
     setCvaiB("");

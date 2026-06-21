@@ -91,6 +91,33 @@ describe("<App /> — tab switching", () => {
   });
 });
 
+describe("<App /> — input UX", () => {
+  it("auto-focuses Diagonal A after the disclaimer is dismissed", async () => {
+    await renderApp();
+    expect(aInput()).toHaveFocus();
+  });
+
+  it("flags an invalid value (0) on the field with aria-invalid", async () => {
+    const user = await renderApp();
+    await user.type(aInput(), "0");
+    expect(aInput()).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("marks an out-of-range value as a warning, not invalid", async () => {
+    const user = await renderApp();
+    await user.type(aInput(), "300");
+    expect(aInput()).toHaveClass("is-warn");
+    expect(aInput()).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("clears a single field with its clear button", async () => {
+    const user = await renderApp();
+    await user.type(aInput(), "100");
+    await user.click(screen.getByRole("button", { name: /Clear Diagonal A/i }));
+    expect(aInput()).toHaveValue(null);
+  });
+});
+
 describe("<App /> — keyboard shortcuts", () => {
   it("opens the shortcuts help dialog with '?'", async () => {
     const user = await renderApp();

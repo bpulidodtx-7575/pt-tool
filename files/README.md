@@ -11,6 +11,7 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 - ✅ **Session Only** — All measurements cleared on page refresh, no data transmitted
 - ✅ **Accessibility** — WCAG compliant with keyboard navigation
 - ✅ **Keyboard shortcuts** — `?` help, `t` switch calculator, `c` copy note, `n` new patient (discoverable via the header help button)
+- ✅ **Input ergonomics** — first field auto-focuses, each field has a clear (×) button, and invalid/out-of-range values get an inline border cue
 - ✅ **Dark Mode** — Automatic (OS preference) plus a manual System/Light/Dark toggle in the header (session-only)
 - ✅ **Responsive** — Optimized for desktop, tablet, and mobile
 - ✅ **Offline / installable** — PWA with app-shell caching, maskable + raster app icons; self-hosted fonts (no CDN)

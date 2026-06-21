@@ -29,6 +29,21 @@ describe("accessibility (axe)", () => {
     expect(await axe(container, axeOpts)).toHaveNoViolations();
   });
 
+  it("a filled, errored number input (clear button + aria-invalid) has no violations", async () => {
+    const { container } = render(
+      <NumberInput
+        id="cvai-a"
+        label="Diagonal A"
+        hint="longer"
+        rangeLabel="80–200 mm"
+        value="0"
+        onChange={() => {}}
+        status="error"
+      />,
+    );
+    expect(await axe(container, axeOpts)).toHaveNoViolations();
+  });
+
   it("an alert message has no violations", async () => {
     const { container } = render(<AlertBox>Diagonal A should be greater than Diagonal B.</AlertBox>);
     expect(await axe(container, axeOpts)).toHaveNoViolations();
