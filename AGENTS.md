@@ -28,10 +28,12 @@ npm run preview
 - **Fonts**: Plus Jakarta Sans + JetBrains Mono are **self-hosted** (`files/fonts/*.woff2`, `@font-face` in `styles.css`) — no CDN, works offline
 - **PWA**: installable + offline app-shell caching via `vite-plugin-pwa` (`files/vite.config.js`)
   - App icons live in `files/public/` (PNG 192/512 + maskable + apple-touch-180), generated from `public/icon-source.svg` via `npm run generate-pwa-assets` (`pwa-assets.config.js`) and **committed**; regenerate only when the source icon changes (needs `sharp`, a devDep)
-- **Test**: `npm test` (Vitest, jsdom) — `calc.test.js` (pure logic) + `PlagiocephalyTool.test.jsx` (component flows)
+- **Test**: `npm test` (Vitest, jsdom). Suites: `calc.test.js` (pure logic), `PlagiocephalyTool.test.jsx` (app flows), `components.test.jsx`, `panels.test.jsx`, `hooks.test.jsx`, `ErrorBoundary.test.jsx`, and `a11y.test.jsx` (automated axe checks).
+  - **Coverage**: `npm run test:coverage` (v8 provider) enforces **80%** statements/branches/functions/lines over `calc.js`, `hooks.js`, `components.jsx`, `panels.jsx`, `ErrorBoundary.jsx` (config in `vite.config.js`); CI runs this. Output in `files/coverage/` (gitignored).
+  - **a11y**: `a11y.test.jsx` asserts `toHaveNoViolations()` via `vitest-axe` (matcher registered in `test-setup.js`); the `color-contrast` rule is disabled since jsdom can't compute it.
 - **Lint**: `npm run lint` (ESLint), **Format**: `npm run format` (Prettier)
 - **Typecheck**: `npm run typecheck` — `calc.js` is JSDoc-typed and checked with `tsc --checkJs` (`files/jsconfig.json`)
-- **CI**: `.github/workflows/ci.yml` runs lint → format check → test → build on Node 20 & 22
+- **CI**: `.github/workflows/ci.yml` runs lint → typecheck → format check → test (with coverage) → build on Node 20 & 22
 
 ## Deployment
 

@@ -179,12 +179,12 @@ export function ResultCard({
       </div>
       <div className="result-body">
         <div className="result-section">
-          <h3>Recommendation</h3>
+          <h2>Recommendation</h2>
           <p>{recommendation}</p>
         </div>
         {presentation?.length > 0 && (
           <div className="result-section">
-            <h3>Clinical presentation</h3>
+            <h2>Clinical presentation</h2>
             <ul>
               {presentation.map((p, i) => (
                 <li key={i}>{p}</li>

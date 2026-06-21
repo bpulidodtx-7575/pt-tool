@@ -121,7 +121,7 @@ export default function App() {
             <span className="brand-mark" aria-hidden="true" />
             <span className="brand-label">Plagiocephaly Assessment</span>
           </div>
-          <span className="status-pill" aria-label="No patient data stored">
+          <span className="status-pill">
             <IcShield size={12} aria-hidden="true" />
             No data stored
           </span>
@@ -146,6 +146,7 @@ export default function App() {
                   </div>
                   <span
                     className="formula-chip"
+                    role="img"
                     aria-label={
                       tab === "cvai"
                         ? "Formula: absolute difference divided by max, times 100"

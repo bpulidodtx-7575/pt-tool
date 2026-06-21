@@ -229,7 +229,7 @@ export function AgeGuidelines() {
         <IcChevron size={16} className="chev" />
       </button>
       {open && (
-        <div id="age-body" className="accordion-body" role="region" aria-labelledby="age-h">
+        <div id="age-body" className="accordion-body">
           <div className="age-block">
             <div className="age-tag">
               <span className="dot" aria-hidden="true" />
@@ -262,7 +262,7 @@ export function AgeGuidelines() {
               <p>Assess for further treatment when secondary skull characteristics are observed:</p>
               <div className="cond-grid">
                 <div className="cond-card">
-                  <h5>Plagiocephaly</h5>
+                  <h3>Plagiocephaly</h3>
                   <div className="eyebrow">Clinical presentation</div>
                   <ul>
                     <li>Ipsilateral ear shift</li>
@@ -276,7 +276,7 @@ export function AgeGuidelines() {
                   </ul>
                 </div>
                 <div className="cond-card">
-                  <h5>Brachycephaly</h5>
+                  <h3>Brachycephaly</h3>
                   <div className="eyebrow">Clinical presentation</div>
                   <ul>
                     <li>Bilateral forehead bossing</li>
