@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import App from "./PlagiocephalyTool";
-import { LegalDisclaimer, NumberInput, AlertBox, ThemeToggle, ShortcutsHelp } from "./components";
+import { LegalDisclaimer, NumberInput, AlertBox, ThemeToggle, ShortcutsHelp, ReloadPromptView } from "./components";
 import { SeverityTable, AgeGuidelines } from "./panels";
 
 // jsdom can't compute colour contrast, so disable that rule everywhere — the
@@ -25,6 +25,13 @@ describe("accessibility (axe)", () => {
   it("a labelled number input has no violations", async () => {
     const { container } = render(
       <NumberInput id="cvai-a" label="Diagonal A" hint="longer" rangeLabel="80–200 mm" value="" onChange={() => {}} />,
+    );
+    expect(await axe(container, axeOpts)).toHaveNoViolations();
+  });
+
+  it("the PWA update prompt has no violations", async () => {
+    const { container } = render(
+      <ReloadPromptView offlineReady={false} needRefresh={true} onReload={() => {}} onClose={() => {}} />,
     );
     expect(await axe(container, axeOpts)).toHaveNoViolations();
   });

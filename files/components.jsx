@@ -89,6 +89,35 @@ export function Toast({ visible }) {
   );
 }
 
+// Pure presentational PWA prompt. State is driven by useRegisterSW in the
+// PwaReloadPrompt wrapper (which owns the build-only virtual module), keeping
+// this fully unit-testable. needRefresh (an available update) takes priority
+// over the one-time offline-ready confirmation.
+export function ReloadPromptView({ offlineReady, needRefresh, onReload, onClose }) {
+  if (!offlineReady && !needRefresh) return null;
+  return (
+    <div
+      className="pwa-prompt"
+      role={needRefresh ? "alert" : "status"}
+      aria-live={needRefresh ? "assertive" : "polite"}
+      aria-atomic="true"
+    >
+      <span className="pwa-prompt-msg">{needRefresh ? "A new version is available." : "Ready to work offline."}</span>
+      <div className="pwa-prompt-actions">
+        {needRefresh && (
+          <button type="button" className="pwa-prompt-reload" onClick={onReload}>
+            <IcRefresh size={14} />
+            Reload
+          </button>
+        )}
+        <button type="button" className="pwa-prompt-close" onClick={onClose} aria-label="Dismiss">
+          <IcX size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function LegalDisclaimer({ onDismiss }) {
   const btnRef = useRef(null);
   useEffect(() => {

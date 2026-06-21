@@ -6,7 +6,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      // "prompt": a new service worker waits for an explicit user action (the
+      // PwaReloadPrompt UI) instead of silently reloading mid-assessment.
+      registerType: "prompt",
       includeAssets: ["favicon.svg", "apple-touch-icon-180x180.png"],
       // App shell only — there is no backend or patient data to sync, so we
       // precache the build output and serve it offline at the bedside.
