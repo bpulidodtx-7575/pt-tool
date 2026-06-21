@@ -16,6 +16,9 @@ playwright-report/
 blob-report/
 playwright/.cache/
 
+# Lighthouse CI
+.lighthouseci/
+
 # Environment
 .env
 .env.local

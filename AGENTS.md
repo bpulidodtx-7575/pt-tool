@@ -35,7 +35,8 @@ npm run preview
   - **E2E**: `npm run test:e2e` (Playwright, `files/e2e/*.spec.js`, Chromium + Pixel 5) runs against the built+previewed app on port 4173. First run needs `npx playwright install chromium`. Screenshots/traces on failure only. Has its own CI job (browser download is blocked in the sandbox, so E2E is CI-verified).
 - **Lint**: `npm run lint` (ESLint), **Format**: `npm run format` (Prettier)
 - **Typecheck**: `npm run typecheck` — `calc.js` is JSDoc-typed and checked with `tsc --checkJs` (`files/jsconfig.json`)
-- **CI**: `.github/workflows/ci.yml` — `build-and-test` job runs lint → typecheck → format check → test (with coverage) → build on Node 20 & 22; a separate `e2e` job installs Chromium and runs Playwright (uploads the HTML report as an artifact on failure)
+- **Lighthouse budgets**: `npm run lhci` (`@lhci/cli`, config in `files/lighthouserc.json`) audits the built `dist/` (`staticDistDir`, median of 3 runs) against category score budgets — perf ≥0.9 (warn), a11y/best-practices/SEO ≥0.95 (error). PWA category omitted (removed in Lighthouse 12). Needs Chrome; verified in CI (sandbox has no Chrome). Reports in `files/.lighthouseci/` (gitignored).
+- **CI**: `.github/workflows/ci.yml` — `build-and-test` job runs lint → typecheck → format check → test (with coverage) → build on Node 20 & 22; a separate `e2e` job installs Chromium and runs Playwright (uploads the HTML report as an artifact on failure); a `lighthouse` job builds and runs the Lighthouse budgets (uploads its report artifact always)
 
 ## Deployment
 
