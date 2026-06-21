@@ -89,6 +89,17 @@ describe("<App /> — tab switching", () => {
     expect(screen.getByText("95.0")).toBeInTheDocument();
     expect(screen.getByText(/Orthotic evaluation recommended/i)).toBeInTheDocument();
   });
+
+  it("uses roving tabindex — only the selected tab is in the Tab sequence", async () => {
+    const user = await renderApp();
+    const cvai = screen.getByRole("tab", { name: /Plagiocephaly/i });
+    const cr = screen.getByRole("tab", { name: /Brachycephaly/i });
+    expect(cvai).toHaveAttribute("tabindex", "0");
+    expect(cr).toHaveAttribute("tabindex", "-1");
+    await user.click(cr);
+    expect(cr).toHaveAttribute("tabindex", "0");
+    expect(cvai).toHaveAttribute("tabindex", "-1");
+  });
 });
 
 describe("<App /> — input UX", () => {
@@ -123,6 +134,16 @@ describe("<App /> — keyboard shortcuts", () => {
     const user = await renderApp();
     await user.keyboard("?");
     expect(screen.getByRole("dialog", { name: /Keyboard shortcuts/i })).toBeInTheDocument();
+  });
+
+  it("returns focus to the trigger when help is closed with Escape", async () => {
+    const user = await renderApp();
+    const helpBtn = screen.getByRole("button", { name: /Keyboard shortcuts/i });
+    await user.click(helpBtn);
+    expect(screen.getByRole("dialog", { name: /Keyboard shortcuts/i })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: /Keyboard shortcuts/i })).not.toBeInTheDocument();
+    expect(helpBtn).toHaveFocus();
   });
 
   it("switches calculator with 't'", async () => {
