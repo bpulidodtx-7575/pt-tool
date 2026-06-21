@@ -91,6 +91,14 @@ export function validateMeasurement(raw, label, range) {
 export const toTenths = (v) => Math.round(v * 10);
 
 /**
+ * Format a raw measurement string as mm using the same tenths rounding as the
+ * calculation, so the EMR note always shows the value the result was computed from.
+ * @param {string} raw
+ * @returns {string}
+ */
+const fmtMm = (raw) => (toTenths(parseFloat(raw)) / 10).toFixed(1);
+
+/**
  * Compute CVAI and its CHOA severity bucket.
  * @param {number} a  Longer diagonal (mm).
  * @param {number} b  Shorter diagonal (mm).
@@ -233,7 +241,7 @@ export const CR_LEVELS = {
   ok: {
     label: "Within normal range",
     short: "Normal",
-    rangeFull: "CR \u2264 85",
+    rangeFull: "CR < 85",
     sevVar: "var(--sev-1)",
     detail: "Continue routine developmental monitoring.",
   },
@@ -267,8 +275,8 @@ export function buildCvaiNote(cvai, sev, rawA, rawB) {
     `Severity: Level ${sev.level} \u2014 ${sev.label}  (range: ${sev.rangeFull})`,
     "",
     "Measurements (caliper):",
-    `  Diagonal A (longer):  ${parseFloat(rawA).toFixed(1)} mm`,
-    `  Diagonal B (shorter): ${parseFloat(rawB).toFixed(1)} mm`,
+    `  Diagonal A (longer):  ${fmtMm(rawA)} mm`,
+    `  Diagonal B (shorter): ${fmtMm(rawB)} mm`,
     "",
     "Clinical Presentation:",
     ...sev.presentation.map((p) => `  - ${p}`),
@@ -304,8 +312,8 @@ export function buildCrNote(cr, res, rawMl, rawAp) {
     `Assessment: ${res.label}  (range: ${res.rangeFull})`,
     "",
     "Measurements (caliper):",
-    `  Medial-Lateral (M/L):     ${parseFloat(rawMl).toFixed(1)} mm`,
-    `  Anterior-Posterior (A/P): ${parseFloat(rawAp).toFixed(1)} mm`,
+    `  Medial-Lateral (M/L):     ${fmtMm(rawMl)} mm`,
+    `  Anterior-Posterior (A/P): ${fmtMm(rawAp)} mm`,
     "",
     `Recommendation: ${res.detail}`,
     `Referral: ${ref}`,
