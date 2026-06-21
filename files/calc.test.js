@@ -1,5 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { validateMeasurement, toTenths, processCvai, processCr, RANGES } from "./calc";
+import {
+  validateMeasurement,
+  toTenths,
+  processCvai,
+  processCr,
+  buildCvaiNote,
+  buildCrNote,
+  fmtTimestamp,
+  SEVERITY,
+  CR_LEVELS,
+  RANGES,
+} from "./calc";
 
 describe("validateMeasurement", () => {
   it("returns empty for blank input", () => {
@@ -153,5 +164,75 @@ describe("processCr", () => {
     // 90 x 100 mm → CR = 90% — should be 'watch' (>90 is ortho)
     const r = processCr(90, 100);
     expect(r.key).toBe("watch");
+  });
+
+  it("handles edge at exactly 85 → 'watch' (matches the 'CR < 85' normal legend)", () => {
+    // 85 x 100 mm → CR = 85% — the ok band is CR < 85, so 85 is 'watch'
+    const r = processCr(85, 100);
+    expect(r.key).toBe("watch");
+  });
+});
+
+describe("CR_LEVELS legend matches processCr behavior", () => {
+  it("labels the normal band as CR < 85 (not ≤ 85)", () => {
+    // Regression guard: the legend must agree with processCr, which routes 85 → watch.
+    expect(CR_LEVELS.ok.rangeFull).toBe("CR < 85");
+    expect(processCr(84.9, 100).key).toBe("ok");
+    expect(processCr(85, 100).key).toBe("watch");
+  });
+});
+
+describe("fmtTimestamp", () => {
+  it("returns a non-empty date + time string", () => {
+    const ts = fmtTimestamp();
+    expect(typeof ts).toBe("string");
+    expect(ts.length).toBeGreaterThan(0);
+    // Locale-agnostic: should contain digits for the date and the time.
+    expect(ts).toMatch(/\d/);
+  });
+});
+
+describe("buildCvaiNote", () => {
+  const sev = SEVERITY[3]; // Level 4 — severe
+  const note = buildCvaiNote(10.0, sev, "100", "90");
+
+  it("includes the header, value, and severity line", () => {
+    expect(note).toContain("PLAGIOCEPHALY ASSESSMENT");
+    expect(note).toContain("CVAI: 10.00%");
+    expect(note).toContain(`Severity: Level ${sev.level}`);
+    expect(note).toContain(sev.label);
+    expect(note).toContain(sev.rangeFull);
+  });
+
+  it("includes both measurements, recommendation, referral, and source", () => {
+    expect(note).toContain("Diagonal A (longer):  100.0 mm");
+    expect(note).toContain("Diagonal B (shorter): 90.0 mm");
+    expect(note).toContain(`Recommendation: ${sev.recommendation}`);
+    expect(note).toContain(`Referral: ${sev.referral}`);
+    expect(note).toContain("not a diagnostic device");
+    sev.presentation.forEach((p) => expect(note).toContain(p));
+  });
+
+  it("rounds measurements with the same tenths rounding as the calculation", () => {
+    // 100.16 → toTenths 1002 → 100.2 mm (not parseFloat-only drift)
+    const n = buildCvaiNote(10.0, sev, "100.16", "90.04");
+    expect(n).toContain("100.2 mm");
+    expect(n).toContain("90.0 mm");
+  });
+});
+
+describe("buildCrNote", () => {
+  it("covers all three referral branches", () => {
+    const ortho = buildCrNote(95, { ...CR_LEVELS.ortho, key: "ortho" }, "95", "100");
+    expect(ortho).toContain("BRACHYCEPHALY ASSESSMENT");
+    expect(ortho).toContain("Cephalic Ratio: 95.0%");
+    expect(ortho).toContain("Referral: Yes");
+
+    const watch = buildCrNote(87, { ...CR_LEVELS.watch, key: "watch" }, "87", "100");
+    expect(watch).toContain("Referral: Monitor");
+
+    const ok = buildCrNote(80, { ...CR_LEVELS.ok, key: "ok" }, "80", "100");
+    expect(ok).toContain("Referral: No");
+    expect(ok).toContain("range: CR < 85");
   });
 });
