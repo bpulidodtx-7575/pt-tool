@@ -121,8 +121,52 @@
 }
 
 /* ── Dark mode ─────────────────────────────────────────────────────────── */
+/* The theme toggle (useTheme) sets data-theme on <html>:
+   - "dark"/"light" → explicit override (the rules below / the default :root)
+   - "system" (default) → no attribute, so the media query drives it live.
+   The dark token set is intentionally duplicated for the explicit attribute and
+   the system media query — keep the two blocks in sync. */
+:root[data-theme="dark"] {
+  --bg: #0f0f0f;
+  --fg: #f0f0f0;
+  --surface: #1a1a1a;
+  --surface-2: #222222;
+  --surface-3: #2a2a2a;
+  --border: #2e2e2e;
+  --border-soft: #252525;
+  --ink-900: #f0f0f0;
+  --ink-700: #d4d4d4;
+  --ink-500: #999999;
+  --ink-300: #666666;
+  --ink-200: #2e2e2e;
+  --ink-100: #222222;
+  --ink: var(--ink-900);
+  --ink-2: var(--ink-700);
+  --ink-3: var(--ink-500);
+  --ink-4: var(--ink-300);
+  --accent: #f2673c;
+  --accent-2: #a78bfa;
+  --accent-soft: rgba(242, 103, 60, 0.15);
+  --accent-strong: #ff7d52;
+  --accent-ink: #ffb89e;
+  --cta: #f2673c;
+  --cta-soft: rgba(242, 103, 60, 0.12);
+  --cta-strong: #ff7d52;
+  --measure-primary: #f2673c;
+  --sev-1: #5ecc80;
+  --sev-2: #d4b800;
+  --sev-3: #e08820;
+  --sev-4: #e06040;
+  --sev-5: #d04030;
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --focus: 0 0 0 3px rgba(242, 103, 60, 0.3), 0 0 0 1.5px rgba(242, 103, 60, 0.6);
+}
+
+/* System mode: follow the OS, unless the user explicitly forced a theme.
+   Keep these values in sync with :root[data-theme="dark"] above. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
     --bg: #0f0f0f;
     --fg: #f0f0f0;
     --surface: #1a1a1a;
@@ -300,6 +344,33 @@ a:focus-visible {
   color: var(--ink-3);
   font-weight: 700;
   white-space: nowrap;
+}
+
+.appbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.theme-toggle:hover {
+  color: var(--ink);
+  border-color: var(--border);
+}
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 /* ── Page layout: single-column stacked ─────────────────────────────── */

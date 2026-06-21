@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useCopy, useScrolled } from "./hooks";
+import { useCopy, useScrolled, useTheme } from "./hooks";
 
 describe("useCopy", () => {
   beforeEach(() => {
@@ -88,5 +88,67 @@ describe("useScrolled", () => {
       window.dispatchEvent(new Event("scroll"));
     });
     await waitFor(() => expect(result.current).toBe(true));
+  });
+});
+
+describe("useTheme", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    delete document.documentElement.dataset.theme;
+    // index.html isn't loaded in jsdom — provide the meta the hook updates.
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "theme-color");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", "");
+  });
+
+  const themeColor = () => document.querySelector('meta[name="theme-color"]').getAttribute("content");
+
+  it("defaults to system and leaves the data-theme attribute unset", () => {
+    const { result } = renderHook(() => useTheme());
+    expect(result.current[0]).toBe("system");
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+    // matchMedia is polyfilled to light, so system resolves to the light chrome.
+    expect(themeColor()).toBe("#f9fafb");
+  });
+
+  it("cycles system -> light -> dark -> system and sets data-theme", () => {
+    const { result } = renderHook(() => useTheme());
+
+    act(() => result.current[1]());
+    expect(result.current[0]).toBe("light");
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(themeColor()).toBe("#f9fafb");
+
+    act(() => result.current[1]());
+    expect(result.current[0]).toBe("dark");
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(themeColor()).toBe("#0f0f0f");
+
+    act(() => result.current[1]());
+    expect(result.current[0]).toBe("system");
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+  });
+
+  it("persists the choice to sessionStorage", () => {
+    const { result } = renderHook(() => useTheme());
+    act(() => result.current[1]()); // light
+    expect(sessionStorage.getItem("pt-theme")).toBe("light");
+  });
+
+  it("restores a saved choice on init", () => {
+    sessionStorage.setItem("pt-theme", "dark");
+    const { result } = renderHook(() => useTheme());
+    expect(result.current[0]).toBe("dark");
+    expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+
+  it("ignores an invalid saved value and falls back to system", () => {
+    sessionStorage.setItem("pt-theme", "neon");
+    const { result } = renderHook(() => useTheme());
+    expect(result.current[0]).toBe("system");
   });
 });

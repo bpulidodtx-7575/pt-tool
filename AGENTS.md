@@ -24,7 +24,7 @@ npm run preview
   - `ErrorBoundary.jsx` — wraps `<App/>` in `main.jsx` for a graceful crash fallback
 - **Core logic** in `files/calc.js` — pure, testable functions (`processCvai`, `processCr`, `validateMeasurement`) plus reference data (`SEVERITY`, `CR_LEVELS`, `RANGES`)
 - **Entrypoint**: `files/index.html` → `files/main.jsx` → `ErrorBoundary` → `PlagiocephalyTool.jsx`
-- **Styling**: `files/styles.css` — CSS variables + oklch color space, dark mode via `prefers-color-scheme`
+- **Styling**: `files/styles.css` — CSS variables + oklch color space. Dark mode: the `useTheme` hook (`hooks.js`) sets `data-theme` on `<html>` for explicit Light/Dark; **System mode (default) leaves the attribute unset** so the `@media (prefers-color-scheme: dark)` rule drives it live. The dark token set is duplicated for `:root[data-theme="dark"]` and the media query — keep them in sync. Choice persists in `sessionStorage` (`pt-theme`); the `<ThemeToggle/>` button lives in the header.
 - **Fonts**: Plus Jakarta Sans + JetBrains Mono are **self-hosted** (`files/fonts/*.woff2`, `@font-face` in `styles.css`) — no CDN, works offline
 - **PWA**: installable + offline app-shell caching via `vite-plugin-pwa` (`files/vite.config.js`)
   - App icons live in `files/public/` (PNG 192/512 + maskable + apple-touch-180), generated from `public/icon-source.svg` via `npm run generate-pwa-assets` (`pwa-assets.config.js`) and **committed**; regenerate only when the source icon changes (needs `sharp`, a devDep)

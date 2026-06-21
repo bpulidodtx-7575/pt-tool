@@ -1,9 +1,28 @@
 import { useEffect, useRef } from "react";
-import { IcCopy, IcCheck, IcRefresh, IcAlert, IcShield, IcExternal } from "./icons";
-import { useCopy } from "./hooks";
+import { IcCopy, IcCheck, IcRefresh, IcAlert, IcShield, IcExternal, IcMonitor, IcSun, IcMoon } from "./icons";
+import { useCopy, useTheme } from "./hooks";
 import { CHOA_PDF } from "./calc";
 
 // ─── Shared UI components ─────────────────────────────────────────────────────
+const THEME_UI = {
+  system: { Icon: IcMonitor, label: "System (following device)", next: "light" },
+  light: { Icon: IcSun, label: "Light", next: "dark" },
+  dark: { Icon: IcMoon, label: "Dark", next: "system" },
+};
+
+// Single header button that cycles System → Light → Dark. System stays the
+// default so the OS preference is honored until a clinician overrides it.
+export function ThemeToggle() {
+  const [mode, cycle] = useTheme();
+  const { Icon, label, next } = THEME_UI[mode];
+  const desc = `Theme: ${label}. Activate to switch to ${THEME_UI[next].label.toLowerCase().replace(" (following device)", "")}.`;
+  return (
+    <button type="button" className="theme-toggle" onClick={cycle} aria-label={desc} title={desc}>
+      <Icon size={16} />
+    </button>
+  );
+}
+
 export function Toast({ visible }) {
   return (
     <div role="status" aria-live="polite" aria-atomic="true" className={`toast${visible ? "" : " hidden"}`}>

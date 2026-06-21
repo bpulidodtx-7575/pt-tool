@@ -17,7 +17,7 @@ import {
 import { IcShield } from "./icons";
 import { useScrolled } from "./hooks";
 import { GuideContent } from "./Diagrams";
-import { Toast, LegalDisclaimer, StickyResult } from "./components";
+import { Toast, LegalDisclaimer, StickyResult, ThemeToggle } from "./components";
 import { CvaiPanel, CrPanel, SeverityTable, AgeGuidelines } from "./panels";
 
 // ─── App ──────────────────────────────────────────────────────────────────────
@@ -121,10 +121,13 @@ export default function App() {
             <span className="brand-mark" aria-hidden="true" />
             <span className="brand-label">Plagiocephaly Assessment</span>
           </div>
-          <span className="status-pill">
-            <IcShield size={12} aria-hidden="true" />
-            No data stored
-          </span>
+          <div className="appbar-actions">
+            <ThemeToggle />
+            <span className="status-pill">
+              <IcShield size={12} aria-hidden="true" />
+              No data stored
+            </span>
+          </div>
         </div>
       </header>
 

@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "vitest-axe";
 import App from "./PlagiocephalyTool";
-import { LegalDisclaimer, NumberInput, AlertBox } from "./components";
+import { LegalDisclaimer, NumberInput, AlertBox, ThemeToggle } from "./components";
 import { SeverityTable, AgeGuidelines } from "./panels";
 
 // jsdom can't compute colour contrast, so disable that rule everywhere — the
@@ -31,6 +31,11 @@ describe("accessibility (axe)", () => {
 
   it("an alert message has no violations", async () => {
     const { container } = render(<AlertBox>Diagonal A should be greater than Diagonal B.</AlertBox>);
+    expect(await axe(container, axeOpts)).toHaveNoViolations();
+  });
+
+  it("the theme toggle has no violations", async () => {
+    const { container } = render(<ThemeToggle />);
     expect(await axe(container, axeOpts)).toHaveNoViolations();
   });
 
