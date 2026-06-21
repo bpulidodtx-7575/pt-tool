@@ -182,6 +182,58 @@ describe("CR_LEVELS legend matches processCr behavior", () => {
   });
 });
 
+// Provenance guard: the numeric band edges shown to clinicians (SEVERITY[].range,
+// CR_LEVELS[].rangeFull) must stay in lockstep with the thresholds the algorithm
+// actually uses. Unlike the hand-picked boundary cases above, these tests *derive*
+// the edges from the reference data, so editing a displayed band without updating
+// the arithmetic (the PR #14 class of bug, for CVAI too) fails CI.
+describe("clinical constants ↔ legend provenance", () => {
+  const nums = (s) => (s.match(/\d+(?:\.\d+)?/g) || []).map(Number);
+
+  describe("CVAI severity bands", () => {
+    const bands = SEVERITY.map((s) => nums(s.range));
+
+    it("forms a contiguous partition at the canonical CHOA edges", () => {
+      const edges = bands.slice(0, -1).map((b, i) => {
+        const upper = b[b.length - 1]; // upper bound of band i
+        const lower = bands[i + 1][0]; // lower bound of band i+1
+        expect(upper).toBe(lower); // no gap / mismatched overlap between bands
+        return upper;
+      });
+      expect(edges).toEqual([3.5, 6.25, 8.75, 11.0]);
+    });
+
+    it("transitions exactly at each displayed edge", () => {
+      // a = 20000 mm → max = 200000 tenths, so 1 tenth of `diff` ≈ 0.0005% CVAI —
+      // fine resolution for probing ±1 tenth around an edge.
+      const idxForDiff = (diff) => processCvai(20000, (200000 - diff) / 10).sevIdx;
+      const edgeDiff = (pct) => Math.round((pct / 100) * 200000);
+      const edges = bands.slice(0, -1).map((b) => b[b.length - 1]);
+      edges.forEach((pct, e) => {
+        expect(idxForDiff(edgeDiff(pct) - 1)).toBe(e); // just below → lower level
+        expect(idxForDiff(edgeDiff(pct) + 1)).toBe(e + 1); // just above → higher level
+      });
+    });
+  });
+
+  describe("Cephalic Ratio thresholds", () => {
+    it("derives the 85 / 90 edges from the displayed bands", () => {
+      expect(nums(CR_LEVELS.ok.rangeFull)).toEqual([85]); // "CR < 85"
+      expect(nums(CR_LEVELS.watch.rangeFull)).toEqual([85, 90]); // "CR 85 – 90"
+      expect(nums(CR_LEVELS.ortho.rangeFull)).toEqual([90]); // "CR > 90"
+    });
+
+    it("routes the displayed edges per legend (ap = 100 mm → CR == ml)", () => {
+      const [lo, hi] = nums(CR_LEVELS.watch.rangeFull); // [85, 90]
+      const crKey = (cr) => processCr(cr, 100).key;
+      expect(crKey(lo - 0.1)).toBe("ok"); // < 85 → normal
+      expect(crKey(lo)).toBe("watch"); // exactly 85 → monitor
+      expect(crKey(hi)).toBe("watch"); // exactly 90 → monitor
+      expect(crKey(hi + 0.1)).toBe("ortho"); // > 90 → orthotic eval
+    });
+  });
+});
+
 describe("fmtTimestamp", () => {
   it("returns a non-empty date + time string", () => {
     const ts = fmtTimestamp();
