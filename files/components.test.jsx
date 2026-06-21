@@ -1,7 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Toast, LegalDisclaimer, NumberInput, AlertBox, ResultCard, StickyResult, ThemeToggle } from "./components";
+import {
+  Toast,
+  LegalDisclaimer,
+  NumberInput,
+  AlertBox,
+  ResultCard,
+  StickyResult,
+  ThemeToggle,
+  ShortcutsHelp,
+} from "./components";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -38,6 +47,37 @@ describe("ThemeToggle", () => {
     sessionStorage.setItem("pt-theme", "dark");
     render(<ThemeToggle />);
     expect(screen.getByRole("button", { name: /Theme: Dark/i })).toBeInTheDocument();
+  });
+});
+
+describe("ShortcutsHelp", () => {
+  it("renders nothing when closed", () => {
+    const { container } = render(<ShortcutsHelp open={false} onClose={() => {}} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("renders the shortcut list and focuses Close when open", () => {
+    render(<ShortcutsHelp open={true} onClose={() => {}} />);
+    expect(screen.getByRole("dialog", { name: /Keyboard shortcuts/i })).toBeInTheDocument();
+    expect(screen.getByText(/Switch calculator/i)).toBeInTheDocument();
+    expect(screen.getByText(/Copy result note for EMR/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Close keyboard shortcuts dialog/i })).toHaveFocus();
+  });
+
+  it("calls onClose from the Close button", async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    render(<ShortcutsHelp open={true} onClose={onClose} />);
+    await user.click(screen.getByRole("button", { name: /Close keyboard shortcuts dialog/i }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("calls onClose when the backdrop is clicked", async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    render(<ShortcutsHelp open={true} onClose={onClose} />);
+    await user.click(screen.getByRole("dialog", { name: /Keyboard shortcuts/i }));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });
 

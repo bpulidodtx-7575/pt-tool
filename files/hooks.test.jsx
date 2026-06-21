@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useCopy, useScrolled, useTheme } from "./hooks";
+import { useCopy, useScrolled, useTheme, useKeyboardShortcuts } from "./hooks";
 
 describe("useCopy", () => {
   beforeEach(() => {
@@ -150,5 +150,76 @@ describe("useTheme", () => {
     sessionStorage.setItem("pt-theme", "neon");
     const { result } = renderHook(() => useTheme());
     expect(result.current[0]).toBe("system");
+  });
+});
+
+describe("useKeyboardShortcuts", () => {
+  const press = (key, opts = {}) =>
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, ...opts }));
+    });
+
+  function setup(enabled = true) {
+    const handlers = { help: vi.fn(), escape: vi.fn(), copy: vi.fn(), clear: vi.fn(), toggleTab: vi.fn() };
+    renderHook(() => useKeyboardShortcuts(handlers, enabled));
+    return handlers;
+  }
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("fires the mapped handler for each key", () => {
+    const h = setup();
+    press("t");
+    press("c");
+    press("n");
+    press("?");
+    press("Escape");
+    expect(h.toggleTab).toHaveBeenCalledOnce();
+    expect(h.copy).toHaveBeenCalledOnce();
+    expect(h.clear).toHaveBeenCalledOnce();
+    expect(h.help).toHaveBeenCalledOnce();
+    expect(h.escape).toHaveBeenCalledOnce();
+  });
+
+  it("does nothing when disabled", () => {
+    const h = setup(false);
+    press("t");
+    press("?");
+    press("Escape");
+    expect(h.toggleTab).not.toHaveBeenCalled();
+    expect(h.help).not.toHaveBeenCalled();
+    expect(h.escape).not.toHaveBeenCalled();
+  });
+
+  it("does not fight native combos when a modifier is held", () => {
+    const h = setup();
+    press("c", { metaKey: true });
+    press("t", { ctrlKey: true });
+    press("n", { altKey: true });
+    expect(h.copy).not.toHaveBeenCalled();
+    expect(h.toggleTab).not.toHaveBeenCalled();
+    expect(h.clear).not.toHaveBeenCalled();
+  });
+
+  it("skips letter actions while a real text input is focused", () => {
+    const input = document.createElement("input");
+    input.type = "text";
+    document.body.appendChild(input);
+    input.focus();
+    const h = setup();
+    press("c");
+    expect(h.copy).not.toHaveBeenCalled();
+  });
+
+  it("still fires letter actions while a number input is focused", () => {
+    const input = document.createElement("input");
+    input.type = "number";
+    document.body.appendChild(input);
+    input.focus();
+    const h = setup();
+    press("c");
+    expect(h.copy).toHaveBeenCalledOnce();
   });
 });

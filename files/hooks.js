@@ -82,3 +82,51 @@ export function useTheme() {
 
   return [mode, cycle];
 }
+
+// Is the element a text-entry target where typing letters is meaningful?
+// Number inputs are excluded — "c"/"n"/"t" aren't valid there, so global
+// letter shortcuts can safely fire even while one is focused.
+function isTextEntry(el) {
+  if (!el) return false;
+  if (el.isContentEditable) return true;
+  const tag = el.tagName;
+  if (tag === "TEXTAREA" || tag === "SELECT") return true;
+  if (tag === "INPUT") {
+    const type = (el.getAttribute("type") || "text").toLowerCase();
+    return !["number", "range", "checkbox", "radio", "button", "submit", "reset"].includes(type);
+  }
+  return false;
+}
+
+// Global bedside shortcuts. `handlers` is read through a ref so the listener
+// stays stable across re-renders; only `enabled` re-binds it.
+export function useKeyboardShortcuts(handlers, enabled = true) {
+  const ref = useRef(handlers);
+  ref.current = handlers;
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const onKey = (e) => {
+      // Never fight native browser/OS combos (Cmd/Ctrl+C, Ctrl+T, …).
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const h = ref.current;
+      if (e.key === "Escape") {
+        h.escape?.();
+        return;
+      }
+      if (e.key === "?") {
+        e.preventDefault();
+        h.help?.();
+        return;
+      }
+      // Letter actions: leave real text fields alone.
+      if (isTextEntry(document.activeElement)) return;
+      const action = { c: h.copy, n: h.clear, t: h.toggleTab }[e.key.toLowerCase()];
+      if (action) {
+        e.preventDefault();
+        action();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [enabled]);
+}

@@ -14,10 +14,10 @@ import {
   CR_LEVELS,
   CHOA_PDF,
 } from "./calc";
-import { IcShield } from "./icons";
-import { useScrolled } from "./hooks";
+import { IcShield, IcKeyboard } from "./icons";
+import { useScrolled, useCopy, useKeyboardShortcuts } from "./hooks";
 import { GuideContent } from "./Diagrams";
-import { Toast, LegalDisclaimer, StickyResult, ThemeToggle } from "./components";
+import { Toast, LegalDisclaimer, StickyResult, ThemeToggle, ShortcutsHelp } from "./components";
 import { CvaiPanel, CrPanel, SeverityTable, AgeGuidelines } from "./panels";
 
 // ─── App ──────────────────────────────────────────────────────────────────────
@@ -29,8 +29,11 @@ export default function App() {
   const [crMl, setCrMl] = useState("");
   const [crAp, setCrAp] = useState("");
   const [toast, setToast] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const toastT = useRef(null);
+  const helpBtnRef = useRef(null);
   const scrolled = useScrolled();
+  const [, copyNote] = useCopy();
 
   useEffect(() => {
     document.title = "Plagiocephaly Assessment Tool";
@@ -107,6 +110,28 @@ export default function App() {
     return { visible: false };
   }, [tab, cvaiA, cvaiB, crMl, crAp]);
 
+  // Global bedside shortcuts (active once the disclaimer is acknowledged).
+  useKeyboardShortcuts(
+    {
+      help: () => setHelpOpen((o) => !o),
+      escape: () => setHelpOpen(false),
+      toggleTab: () => setTab((t) => (t === "cvai" ? "cr" : "cvai")),
+      clear: clearAll,
+      copy: () => {
+        if (sticky.visible) {
+          copyNote(sticky.copyText);
+          showToast();
+        }
+      },
+    },
+    disclaimerDone,
+  );
+
+  const closeHelp = () => {
+    setHelpOpen(false);
+    helpBtnRef.current?.focus();
+  };
+
   return (
     <>
       {!disclaimerDone && <LegalDisclaimer onDismiss={() => setDisclaimerDone(true)} />}
@@ -122,6 +147,17 @@ export default function App() {
             <span className="brand-label">Plagiocephaly Assessment</span>
           </div>
           <div className="appbar-actions">
+            <button
+              type="button"
+              className="help-btn"
+              ref={helpBtnRef}
+              onClick={() => setHelpOpen((o) => !o)}
+              aria-label="Keyboard shortcuts"
+              aria-haspopup="dialog"
+              title="Keyboard shortcuts (?)"
+            >
+              <IcKeyboard size={16} />
+            </button>
             <ThemeToggle />
             <span className="status-pill">
               <IcShield size={12} aria-hidden="true" />
@@ -250,6 +286,7 @@ export default function App() {
       </footer>
 
       <StickyResult {...sticky} onCopy={showToast} />
+      <ShortcutsHelp open={helpOpen} onClose={closeHelp} />
     </>
   );
 }

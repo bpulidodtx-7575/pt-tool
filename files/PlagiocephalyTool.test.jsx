@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./PlagiocephalyTool";
@@ -88,6 +88,40 @@ describe("<App /> — tab switching", () => {
     await user.type(screen.getByLabelText(/Length \(A\/P\) in millimeters/i), "100");
     expect(screen.getByText("95.0")).toBeInTheDocument();
     expect(screen.getByText(/Orthotic evaluation recommended/i)).toBeInTheDocument();
+  });
+});
+
+describe("<App /> — keyboard shortcuts", () => {
+  it("opens the shortcuts help dialog with '?'", async () => {
+    const user = await renderApp();
+    await user.keyboard("?");
+    expect(screen.getByRole("dialog", { name: /Keyboard shortcuts/i })).toBeInTheDocument();
+  });
+
+  it("switches calculator with 't'", async () => {
+    const user = await renderApp();
+    expect(screen.getByRole("heading", { level: 1, name: /Cranial Vault Asymmetry Index/i })).toBeInTheDocument();
+    await user.keyboard("t");
+    expect(screen.getByRole("heading", { level: 1, name: /Cephalic Ratio/i })).toBeInTheDocument();
+  });
+
+  it("clears measurements with 'n' (works while a number field is focused)", async () => {
+    const user = await renderApp();
+    await user.type(aInput(), "100");
+    await user.type(bInput(), "90");
+    expect(screen.getByText("10.00")).toBeInTheDocument();
+    await user.keyboard("n");
+    expect(aInput()).toHaveValue(null);
+    expect(screen.getByText(/Enter both diagonal measurements/i)).toBeInTheDocument();
+  });
+
+  it("copies the current note with 'c'", async () => {
+    const user = await renderApp();
+    const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue(undefined);
+    await user.type(aInput(), "100");
+    await user.type(bInput(), "90");
+    await user.keyboard("c");
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("PLAGIOCEPHALY ASSESSMENT"));
   });
 });
 
