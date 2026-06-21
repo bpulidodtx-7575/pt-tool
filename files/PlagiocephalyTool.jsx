@@ -31,7 +31,6 @@ export default function App() {
   const [toast, setToast] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const toastT = useRef(null);
-  const helpBtnRef = useRef(null);
   const scrolled = useScrolled();
   const [, copyNote] = useCopy();
 
@@ -135,10 +134,9 @@ export default function App() {
     disclaimerDone,
   );
 
-  const closeHelp = () => {
-    setHelpOpen(false);
-    helpBtnRef.current?.focus();
-  };
+  // The shortcuts dialog's focus trap restores focus to the trigger on unmount,
+  // so closing (button or Escape) just needs to toggle it shut.
+  const closeHelp = () => setHelpOpen(false);
 
   return (
     <>
@@ -158,7 +156,6 @@ export default function App() {
             <button
               type="button"
               className="help-btn"
-              ref={helpBtnRef}
               onClick={() => setHelpOpen((o) => !o)}
               aria-label="Keyboard shortcuts"
               aria-haspopup="dialog"
@@ -217,6 +214,7 @@ export default function App() {
                       role="tab"
                       aria-selected={tab === m.id}
                       aria-controls={`panel-${m.id}`}
+                      tabIndex={tab === m.id ? 0 : -1}
                       onClick={() => setTab(m.id)}
                     >
                       {m.label}

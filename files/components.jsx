@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { IcCopy, IcCheck, IcRefresh, IcAlert, IcShield, IcExternal, IcMonitor, IcSun, IcMoon, IcX } from "./icons";
-import { useCopy, useTheme } from "./hooks";
+import { useCopy, useTheme, useFocusTrap } from "./hooks";
 import { CHOA_PDF } from "./calc";
 
 // ─── Keyboard shortcuts help ──────────────────────────────────────────────────
@@ -13,11 +13,14 @@ const SHORTCUTS = [
 ];
 
 export function ShortcutsHelp({ open, onClose }) {
-  const closeRef = useRef(null);
-  useEffect(() => {
-    if (open) closeRef.current?.focus();
-  }, [open]);
-  if (!open) return null;
+  return open ? <ShortcutsDialog onClose={onClose} /> : null;
+}
+
+// Mounted only while open, so useFocusTrap activates on mount and restores focus
+// to the trigger on unmount — covering both the Close button and the Escape path.
+function ShortcutsDialog({ onClose }) {
+  const modalRef = useRef(null);
+  useFocusTrap(modalRef);
   return (
     <div
       className="disc-overlay"
@@ -28,7 +31,7 @@ export function ShortcutsHelp({ open, onClose }) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="disc-modal">
+      <div className="disc-modal" ref={modalRef}>
         <div className="shortcuts-head">
           <h2 id="kbd-h">Keyboard shortcuts</h2>
         </div>
@@ -51,7 +54,7 @@ export function ShortcutsHelp({ open, onClose }) {
           </p>
         </div>
         <div className="disc-foot">
-          <button ref={closeRef} className="disc-cta" onClick={onClose} aria-label="Close keyboard shortcuts dialog">
+          <button className="disc-cta" onClick={onClose} aria-label="Close keyboard shortcuts dialog">
             Close
           </button>
         </div>
@@ -119,13 +122,14 @@ export function ReloadPromptView({ offlineReady, needRefresh, onReload, onClose 
 }
 
 export function LegalDisclaimer({ onDismiss }) {
-  const btnRef = useRef(null);
-  useEffect(() => {
-    btnRef.current?.focus();
-  }, []);
+  const modalRef = useRef(null);
+  const ctaRef = useRef(null);
+  // Trap focus within the mandatory gate; the CTA is the initial target. Don't
+  // restore focus on unmount — the app moves focus to the first field on dismiss.
+  useFocusTrap(modalRef, { initialFocusRef: ctaRef, restoreFocus: false });
   return (
     <div className="disc-overlay" role="dialog" aria-modal="true" aria-labelledby="disc-h" aria-describedby="disc-body">
-      <div className="disc-modal">
+      <div className="disc-modal" ref={modalRef}>
         <div className="disc-head">
           <span className="disc-head-icon" aria-hidden="true">
             <IcShield size={24} />
@@ -160,7 +164,7 @@ export function LegalDisclaimer({ onDismiss }) {
             Official CHOA Plagiocephaly Severity Scale PDF
           </a>
           <button
-            ref={btnRef}
+            ref={ctaRef}
             className="disc-cta"
             onClick={onDismiss}
             aria-label="Acknowledge disclaimer and continue to the reference tool"

@@ -80,6 +80,17 @@ describe("ShortcutsHelp", () => {
     await user.click(screen.getByRole("dialog", { name: /Keyboard shortcuts/i }));
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it("traps Tab on its single focusable element", async () => {
+    const user = userEvent.setup();
+    render(<ShortcutsHelp open={true} onClose={() => {}} />);
+    const close = screen.getByRole("button", { name: /Close keyboard shortcuts dialog/i });
+    expect(close).toHaveFocus();
+    await user.tab();
+    expect(close).toHaveFocus(); // focus can't escape the dialog
+    await user.tab({ shift: true });
+    expect(close).toHaveFocus();
+  });
 });
 
 describe("Toast", () => {
@@ -108,6 +119,18 @@ describe("LegalDisclaimer", () => {
     render(<LegalDisclaimer onDismiss={onDismiss} />);
     await user.click(screen.getByRole("button", { name: /Acknowledge disclaimer/i }));
     expect(onDismiss).toHaveBeenCalledOnce();
+  });
+
+  it("traps Tab focus between the PDF link and the acknowledge button", async () => {
+    const user = userEvent.setup();
+    render(<LegalDisclaimer onDismiss={() => {}} />);
+    const cta = screen.getByRole("button", { name: /Acknowledge disclaimer/i });
+    const pdf = screen.getByRole("link", { name: /CHOA Plagiocephaly Severity Scale PDF/i });
+    expect(cta).toHaveFocus(); // initial focus is the CTA (last focusable)
+    await user.tab();
+    expect(pdf).toHaveFocus(); // wraps forward to the first focusable
+    await user.tab({ shift: true });
+    expect(cta).toHaveFocus(); // wraps back to the last
   });
 });
 
