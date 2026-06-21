@@ -52,5 +52,18 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./test-setup.js"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
+      // Cover the app's logic + components; exclude entry/config and the
+      // largely-static icon/diagram markup that integration tests already render.
+      include: ["calc.js", "hooks.js", "components.jsx", "panels.jsx", "ErrorBoundary.jsx"],
+      thresholds: {
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
+      },
+    },
   },
 });

@@ -789,7 +789,7 @@ a:focus-visible {
   flex-direction: column;
   gap: 4px;
 }
-.result-section h3 {
+.result-section h2 {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1152,7 +1152,7 @@ a:focus-visible {
   padding: 12px 14px;
   background: var(--surface-2);
 }
-.cond-card h5 {
+.cond-card h3 {
   font-size: 13px;
   font-weight: 700;
   color: var(--ink);
