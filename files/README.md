@@ -23,7 +23,7 @@ CHOA Plagiocephaly Assessment Tool — A clinical reference application for CVAI
 - **Typography**: Plus Jakarta Sans + JetBrains Mono (self-hosted, `files/fonts/`)
 - **PWA**: `vite-plugin-pwa` (offline app-shell)
 - **Testing**: Vitest + React Testing Library (jsdom), v8 coverage (80% threshold), axe accessibility checks (`vitest-axe`), property-based tests (`fast-check`), and real-browser E2E (`@playwright/test`)
-- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, typecheck, format check, test + coverage, build on Node 20 & 22; plus a separate Playwright E2E job
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint, typecheck, format check, test + coverage, build on Node 20 & 22; plus separate Playwright E2E and Lighthouse-budget jobs
 - **Deployment**: Netlify
 
 ## Local Development
@@ -57,12 +57,14 @@ npm test           # Run the Vitest suite once (unit + property-based)
 npm run test:watch
 npm run test:coverage  # Vitest with v8 coverage (enforces 80% thresholds)
 npm run test:e2e   # Playwright E2E (real browser; auto-builds + previews)
+npm run lhci       # Lighthouse CI budgets (needs Chrome; run after `npm run build`)
 npm run lint       # ESLint
 npm run typecheck  # tsc --checkJs over calc.js (JSDoc types)
 npm run format     # Prettier (write)
 ```
 
 > First E2E run only: `npx playwright install chromium` to fetch the browser.
+> `npm run lhci` audits the built `dist/` against the budgets in `lighthouserc.json`.
 
 ### Build
 
@@ -141,6 +143,7 @@ files/
 ├── test-setup.js           # jsdom polyfills + axe matcher
 ├── e2e/                    # Playwright E2E specs (*.spec.js) — real browser
 ├── playwright.config.js    # Playwright config (Chromium + Pixel 5)
+├── lighthouserc.json       # Lighthouse CI budgets (perf/a11y/best-practices/SEO)
 ├── styles.css              # Flat design system + dark mode + @font-face
 ├── fonts/                  # Self-hosted woff2 fonts
 ├── public/                 # Static assets: favicon.svg + generated PWA icons (PNG)

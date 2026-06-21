@@ -77,3 +77,34 @@ jobs:
           name: playwright-report
           path: files/playwright-report/
           retention-days: 7
+
+  # Performance/accessibility/best-practices/SEO budgets on the production build.
+  # ubuntu-latest ships google-chrome-stable, so no browser download is needed.
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: npm
+          cache-dependency-path: files/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Lighthouse CI
+        run: npm run lhci
+
+      - name: Upload Lighthouse report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: files/.lighthouseci/
+          retention-days: 7
