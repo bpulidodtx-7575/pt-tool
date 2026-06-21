@@ -68,3 +68,4 @@ export const IcKeyboard = (p) => (
     <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" />
   </Ic>
 );
+export const IcX = (p) => <Ic {...p} d="M18 6 6 18M6 6l12 12" />;

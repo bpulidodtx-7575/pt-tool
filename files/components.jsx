@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { IcCopy, IcCheck, IcRefresh, IcAlert, IcShield, IcExternal, IcMonitor, IcSun, IcMoon } from "./icons";
+import { IcCopy, IcCheck, IcRefresh, IcAlert, IcShield, IcExternal, IcMonitor, IcSun, IcMoon, IcX } from "./icons";
 import { useCopy, useTheme } from "./hooks";
 import { CHOA_PDF } from "./calc";
 
@@ -145,10 +145,13 @@ export function LegalDisclaimer({ onDismiss }) {
 }
 
 // Touch-friendly input: 52px min-height, 16px font-size, visible label
-export function NumberInput({ id, label, hint, rangeLabel, swatchVar, value, onChange, nextId }) {
+export function NumberInput({ id, label, hint, rangeLabel, swatchVar, value, onChange, nextId, status }) {
+  const inputRef = useRef(null);
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && nextId) document.getElementById(nextId)?.focus();
   };
+  const hasValue = value !== "" && value != null;
+  const cls = ["", status && `is-${status}`, hasValue && "clearable"].filter(Boolean).join(" ");
   return (
     <div className="field">
       <label htmlFor={id} className="field-label">
@@ -160,6 +163,7 @@ export function NumberInput({ id, label, hint, rangeLabel, swatchVar, value, onC
       </label>
       <div className="input-wrap">
         <input
+          ref={inputRef}
           id={id}
           type="number"
           inputMode="decimal"
@@ -170,9 +174,24 @@ export function NumberInput({ id, label, hint, rangeLabel, swatchVar, value, onC
           onKeyDown={handleKeyDown}
           placeholder="—"
           autoComplete="off"
+          className={cls}
           aria-label={`${label} in millimeters`}
+          aria-invalid={status === "error" ? "true" : undefined}
           aria-describedby={rangeLabel ? `${id}-range` : undefined}
         />
+        {hasValue && (
+          <button
+            type="button"
+            className="input-clear"
+            aria-label={`Clear ${label}`}
+            onClick={() => {
+              onChange("");
+              inputRef.current?.focus();
+            }}
+          >
+            <IcX size={14} />
+          </button>
+        )}
         <span className="unit" aria-hidden="true">
           mm
         </span>
