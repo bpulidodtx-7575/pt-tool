@@ -10,6 +10,7 @@ import {
   StickyResult,
   ThemeToggle,
   ShortcutsHelp,
+  ReloadPromptView,
 } from "./components";
 
 afterEach(() => vi.restoreAllMocks());
@@ -264,5 +265,39 @@ describe("StickyResult", () => {
     await user.click(btn);
     expect(writeText).toHaveBeenCalledWith("note-body");
     expect(onCopy).toHaveBeenCalledOnce();
+  });
+});
+
+describe("ReloadPromptView", () => {
+  it("renders nothing when neither offline-ready nor an update is pending", () => {
+    const { container } = render(
+      <ReloadPromptView offlineReady={false} needRefresh={false} onReload={() => {}} onClose={() => {}} />,
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("shows a polite offline-ready toast with no Reload action", () => {
+    render(<ReloadPromptView offlineReady={true} needRefresh={false} onReload={() => {}} onClose={() => {}} />);
+    expect(screen.getByText(/Ready to work offline/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Reload/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+  });
+
+  it("shows an assertive update prompt and wires Reload + Dismiss", async () => {
+    const onReload = vi.fn();
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    render(<ReloadPromptView offlineReady={false} needRefresh={true} onReload={onReload} onClose={onClose} />);
+    expect(screen.getByRole("alert")).toHaveTextContent(/A new version is available/i);
+    await user.click(screen.getByRole("button", { name: /Reload/i }));
+    expect(onReload).toHaveBeenCalledOnce();
+    await user.click(screen.getByRole("button", { name: /Dismiss/i }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("prioritises the update prompt when both states are set", () => {
+    render(<ReloadPromptView offlineReady={true} needRefresh={true} onReload={() => {}} onClose={() => {}} />);
+    expect(screen.getByText(/A new version is available/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Ready to work offline/i)).not.toBeInTheDocument();
   });
 });

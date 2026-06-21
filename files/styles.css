@@ -1337,6 +1337,74 @@ a:focus-visible {
   }
 }
 
+/* ── PWA update / offline-ready prompt ────────────────────────────────── */
+.pwa-prompt {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: min(440px, calc(100vw - 24px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+  z-index: 200;
+}
+.pwa-prompt-msg {
+  font-size: 14px;
+  font-weight: 600;
+}
+.pwa-prompt-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.pwa-prompt-reload {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pwa-prompt-reload:hover {
+  filter: brightness(1.05);
+}
+.pwa-prompt-reload:focus-visible,
+.pwa-prompt-close:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+.pwa-prompt-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.pwa-prompt-close:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
 /* ── Sticky mobile result bar ─────────────────────────────────────────── */
 .sticky-result {
   display: none;
