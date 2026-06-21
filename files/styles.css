@@ -351,7 +351,8 @@ a:focus-visible {
   align-items: center;
   gap: 8px;
 }
-.theme-toggle {
+.theme-toggle,
+.help-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -364,11 +365,13 @@ a:focus-visible {
   color: var(--ink-3);
   cursor: pointer;
 }
-.theme-toggle:hover {
+.theme-toggle:hover,
+.help-btn:hover {
   color: var(--ink);
   border-color: var(--border);
 }
-.theme-toggle:focus-visible {
+.theme-toggle:focus-visible,
+.help-btn:focus-visible {
   outline: none;
   box-shadow: var(--focus);
 }
@@ -1465,6 +1468,60 @@ a:focus-visible {
 .disc-cta:focus-visible {
   outline: none;
   box-shadow: var(--focus);
+}
+
+/* ── Keyboard shortcuts dialog (reuses .disc-overlay/.disc-modal layout) ── */
+.shortcuts-head {
+  padding: 18px var(--pad-card) 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.shortcuts-head h2 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.shortcut-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.shortcut-row dt {
+  flex-shrink: 0;
+  min-width: 64px;
+  display: flex;
+  gap: 4px;
+}
+.shortcut-row dd {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.shortcut-note {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.6;
+}
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: var(--r-xs);
+  line-height: 1.4;
 }
 
 /* ── Card footer strip ────────────────────────────────────────────────── */

@@ -3,6 +3,63 @@ import { IcCopy, IcCheck, IcRefresh, IcAlert, IcShield, IcExternal, IcMonitor, I
 import { useCopy, useTheme } from "./hooks";
 import { CHOA_PDF } from "./calc";
 
+// ─── Keyboard shortcuts help ──────────────────────────────────────────────────
+const SHORTCUTS = [
+  { keys: ["?"], label: "Show / hide this help" },
+  { keys: ["t"], label: "Switch calculator (Plagiocephaly ⇄ Brachycephaly)" },
+  { keys: ["c"], label: "Copy result note for EMR" },
+  { keys: ["n"], label: "New patient (clear measurements)" },
+  { keys: ["Esc"], label: "Close this dialog" },
+];
+
+export function ShortcutsHelp({ open, onClose }) {
+  const closeRef = useRef(null);
+  useEffect(() => {
+    if (open) closeRef.current?.focus();
+  }, [open]);
+  if (!open) return null;
+  return (
+    <div
+      className="disc-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="kbd-h"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="disc-modal">
+        <div className="shortcuts-head">
+          <h2 id="kbd-h">Keyboard shortcuts</h2>
+        </div>
+        <div className="disc-body">
+          <dl className="shortcut-list">
+            {SHORTCUTS.map((s) => (
+              <div className="shortcut-row" key={s.label}>
+                <dt>
+                  {s.keys.map((k) => (
+                    <kbd key={k}>{k}</kbd>
+                  ))}
+                </dt>
+                <dd>{s.label}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="shortcut-note">
+            Action keys (<kbd>c</kbd> <kbd>n</kbd> <kbd>t</kbd>) work while a measurement field is focused. Within the
+            calculator tabs, <kbd>←</kbd>/<kbd>→</kbd> also switch, and <kbd>Enter</kbd> advances to the next field.
+          </p>
+        </div>
+        <div className="disc-foot">
+          <button ref={closeRef} className="disc-cta" onClick={onClose} aria-label="Close keyboard shortcuts dialog">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Shared UI components ─────────────────────────────────────────────────────
 const THEME_UI = {
   system: { Icon: IcMonitor, label: "System (following device)", next: "light" },
