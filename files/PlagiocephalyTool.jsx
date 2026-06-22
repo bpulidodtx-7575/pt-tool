@@ -16,7 +16,6 @@ import {
 } from "./calc";
 import { IcShield, IcKeyboard } from "./icons";
 import { useScrolled, useCopy, useKeyboardShortcuts } from "./hooks";
-import { GuideContent } from "./Diagrams";
 import { Toast, LegalDisclaimer, StickyResult, ThemeToggle, ShortcutsHelp } from "./components";
 import { CvaiPanel, CrPanel, SeverityTable, AgeGuidelines } from "./panels";
 
@@ -173,18 +172,18 @@ export default function App() {
       </header>
 
       <main id="main">
-        {/* Mobile-first: single column → two-column grid at 600px → centered 900px at 1000px */}
+        {/* Single column at all widths · max-width 900px · padding scales up at 600px / 1000px */}
         <div className="page-wrap">
-          {/* ── Left / full-width column: calculator ── */}
+          {/* ── Calculator (full width) ── */}
           <div style={{ minWidth: 0 }}>
             <section className="card" aria-labelledby="calc-h">
-              <div className="card-pad" style={{ paddingBottom: 0 }}>
-                <div className="card-head-flex" style={{ marginBottom: 14 }}>
+              <div className="card-pad calc-card-head">
+                <div className="card-head-flex calc-head-row">
                   <div>
-                    <h1 id="calc-h" className="card-title" style={{ fontSize: 18 }}>
+                    <h1 id="calc-h" className="card-title calc-title">
                       {tab === "cvai" ? "Cranial Vault Asymmetry Index" : "Cephalic Ratio"}
                     </h1>
-                    <div className="card-meta" style={{ marginTop: 3 }}>
+                    <div className="card-meta calc-meta">
                       {tab === "cvai" ? "Diagonal asymmetry · plagiocephaly" : "Width-to-length ratio · brachycephaly"}
                     </div>
                   </div>
@@ -257,19 +256,8 @@ export default function App() {
             </section>
           </div>
 
-          {/* ── Right column: reference sidebar (hidden on mobile via CSS) ── */}
+          {/* ── Reference section — stacks below the calculator at all widths ── */}
           <div className="ref-col">
-            {/* Guide card: hidden on mobile, visible tablet+ via CSS */}
-            <div className="card guide-sidebar-card">
-              <div className="card-head">
-                <h2 className="card-title">How to measure</h2>
-                <span className="card-meta">{tab === "cvai" ? "CVAI" : "Cephalic Ratio"}</span>
-              </div>
-              <div style={{ padding: "0 var(--pad-card) var(--pad-card)" }}>
-                <GuideContent tab={tab} />
-              </div>
-            </div>
-
             <SeverityTable />
             <AgeGuidelines />
           </div>

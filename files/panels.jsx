@@ -205,7 +205,7 @@ export function SeverityTable() {
           </tbody>
         </table>
       </div>
-      <div style={{ padding: "10px var(--pad-card) 14px", fontSize: 11, color: "var(--ink-3)", lineHeight: 1.6 }}>
+      <div className="sev-footnote">
         Recommendations are examples, not a substitute for clinical judgment.{" "}
         <a
           href={CHOA_PDF}
