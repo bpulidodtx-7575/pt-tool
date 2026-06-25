@@ -1,0 +1,4 @@
+# Normalize line endings: store text as LF in the repo and check out as LF,
+# regardless of each contributor's core.autocrlf setting. Binary files are
+# auto-detected and left untouched.
+* text=auto eol=lf

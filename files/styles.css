@@ -407,11 +407,6 @@ a:focus-visible {
   margin-top: var(--gap-stack);
 }
 
-/* Guide sidebar card always hidden — guide lives inline inside calculator */
-.guide-sidebar-card {
-  display: none !important;
-}
-
 /* Inline guide always visible */
 .inline-guide {
   display: block;
@@ -458,6 +453,20 @@ a:focus-visible {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+/* Calculator card header — token-aligned overrides for the title/meta cluster */
+.calc-card-head {
+  padding-bottom: 0;
+}
+.calc-head-row {
+  margin-bottom: 14px;
+}
+.calc-title {
+  font-size: 18px;
+}
+.calc-meta {
+  margin-top: 3px;
 }
 .eyebrow {
   font-size: 10px;
@@ -1142,6 +1151,12 @@ a:focus-visible {
 .sev-table .rec-cell {
   color: var(--ink-2);
   line-height: 1.5;
+}
+.sev-footnote {
+  padding: 10px var(--pad-card) 14px;
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.6;
 }
 
 /* ── Accordion (age guidelines) ───────────────────────────────────────── */
