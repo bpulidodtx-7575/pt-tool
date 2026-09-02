@@ -40,6 +40,14 @@ npm run preview
 - **Security scanning**: a `security` job in `ci.yml` runs `npm audit --omit=dev --audit-level=high` as a **blocking** gate (only `react`/`react-dom` ship, so production deps are the gate) plus a non-blocking full-tree `npm audit` for triage of dev-tooling advisories. CodeQL static analysis runs from a separate `.github/workflows/codeql.yml` (javascript-typescript; push to main, PRs into main, weekly cron) — alerts land in the repo Security tab. Dependabot (`.github/dependabot.yml`) covers npm + Actions updates.
 - **CI**: `.github/workflows/ci.yml` — `build-and-test` job runs lint → typecheck → format check → test (with coverage) → build on Node 20 & 22; a separate `e2e` job installs Chromium and runs Playwright (uploads the HTML report as an artifact on failure); a `lighthouse` job builds and runs the Lighthouse budgets (uploads its report artifact always); a `security` job runs the `npm audit` gate. CodeQL runs as its own workflow.
 
+## Motion & UI craft skills
+
+Emil Kowalski's design-engineering skill set is vendored into `.claude/skills/`
+(`emil-design-eng`, `animate`, `review-animations`, `apple-design`, and more) — use it for easing,
+duration, and polish decisions. It does not override anything above: no runtime dependencies beyond
+React, CSS transitions only, the `netlify.toml` CSP holds, and the a11y/Lighthouse gates outrank any
+motion suggestion. See `.claude/EMIL-KOWALSKI-SKILLS.md`.
+
 ## Deployment
 
 - **Netlify** — config at `files/netlify.toml`
