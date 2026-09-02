@@ -2,7 +2,7 @@ import { useState } from "react";
 import { IcRuler, IcChevron } from "./icons";
 
 // ─── Diagrams ─────────────────────────────────────────────────────────────────
-export function DiagramCVAI() {
+function DiagramCVAI() {
   return (
     <div
       className="diagram-frame"
@@ -78,7 +78,7 @@ export function DiagramCVAI() {
   );
 }
 
-export function DiagramCR() {
+function DiagramCR() {
   return (
     <div
       className="diagram-frame"
@@ -160,7 +160,7 @@ const GUIDE_TEXT = {
   cr: "Measure M/L (width) and A/P (length) using calipers. CR > 90 indicates orthotic evaluation per CHOA.",
 };
 
-export function GuideContent({ tab }) {
+function GuideContent({ tab }) {
   return (
     <>
       {tab === "cvai" ? <DiagramCVAI /> : <DiagramCR />}

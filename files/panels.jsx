@@ -29,10 +29,10 @@ export function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
     !errorMsg && !anyEmpty && vA.ok && vB.ok && vA.value <= vB.value
       ? "Diagonal A should be greater than Diagonal B."
       : null;
-  const result = !anyEmpty && !errorMsg && !logicErr ? processCvai(vA.value, vB.value) : null;
+  const result = !anyEmpty && !errorMsg && !logicErr && vA.ok && vB.ok ? processCvai(vA.value, vB.value) : null;
   const sev = result ? SEVERITY[result.sevIdx] : null;
   const cvai = result?.displayCvai ?? null;
-  const copyText = useMemo(() => (sev ? buildCvaiNote(cvai, sev, a, b) : ""), [cvai, sev, a, b]);
+  const copyText = useMemo(() => (sev && cvai !== null ? buildCvaiNote(cvai, sev, a, b) : ""), [cvai, sev, a, b]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -69,7 +69,7 @@ export function CvaiPanel({ a, setA, b, setB, onCopy, onClear }) {
       {bothEmpty && <div className="result-empty">Enter both diagonal measurements to calculate CVAI</div>}
       {errorMsg && <AlertBox>{errorMsg}</AlertBox>}
       {logicErr && <AlertBox>{logicErr}</AlertBox>}
-      {sev && (
+      {sev && cvai !== null && (
         <ResultCard
           eyebrow="CVAI"
           value={cvai.toFixed(2)}
@@ -96,10 +96,10 @@ export function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
   const anyEmpty = vMl.empty || vAp.empty;
   const errorMsg = !vMl.ok && !vMl.empty ? vMl.error : !vAp.ok && !vAp.empty ? vAp.error : null;
   const warnMsg = !errorMsg ? vMl.warning || vAp.warning : null;
-  const result = !anyEmpty && !errorMsg ? processCr(vMl.value, vAp.value) : null;
+  const result = !anyEmpty && !errorMsg && vMl.ok && vAp.ok ? processCr(vMl.value, vAp.value) : null;
   const res = useMemo(() => (result ? { ...CR_LEVELS[result.key], key: result.key } : null), [result]);
   const cr = result?.displayCr ?? null;
-  const copyText = useMemo(() => (res ? buildCrNote(cr, res, ml, ap) : ""), [cr, res, ml, ap]);
+  const copyText = useMemo(() => (res && cr !== null ? buildCrNote(cr, res, ml, ap) : ""), [cr, res, ml, ap]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -134,7 +134,7 @@ export function CrPanel({ ml, ap, setMl, setAp, onCopy, onClear }) {
       )}
       {bothEmpty && <div className="result-empty">Enter both measurements to calculate Cephalic Ratio</div>}
       {errorMsg && <AlertBox>{errorMsg}</AlertBox>}
-      {res && (
+      {res && cr !== null && (
         <ResultCard
           eyebrow="Cephalic Ratio"
           value={cr.toFixed(1)}
@@ -187,7 +187,10 @@ export function SeverityTable() {
             {SEVERITY.map((s) => (
               <tr key={s.level}>
                 <td>
-                  <span className="level-num" style={{ "--sev-color": s.sevVar }}>
+                  <span
+                    className="level-num"
+                    style={/** @type {import("react").CSSProperties} */ ({ "--sev-color": s.sevVar })}
+                  >
                     <span className="bar" aria-hidden="true" />L{s.level}
                   </span>
                 </td>

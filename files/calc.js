@@ -11,13 +11,30 @@
  */
 
 /**
- * @typedef {Object} ValidationResult
- * @property {boolean} ok
- * @property {number|null} value
+ * A measurement that parsed and passed the hard checks. `value` is always a
+ * finite number greater than zero, so a caller guarded by `ok` can use it
+ * directly — this is why the result is a discriminated union rather than one
+ * shape with a nullable `value`.
+ * @typedef {Object} ValidMeasurement
+ * @property {true} ok
+ * @property {number} value
+ * @property {null} error
+ * @property {false} empty
+ * @property {string|null} warning
+ */
+
+/**
+ * A measurement that was blank or failed validation. `value` is always null,
+ * and `error` is null only in the blank case (`empty: true`).
+ * @typedef {Object} InvalidMeasurement
+ * @property {false} ok
+ * @property {null} value
  * @property {string|null} error
  * @property {boolean} [empty]
  * @property {string|null} [warning]
  */
+
+/** @typedef {ValidMeasurement | InvalidMeasurement} ValidationResult */
 
 /**
  * @typedef {Object} CvaiResult

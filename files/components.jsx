@@ -122,7 +122,9 @@ export function ReloadPromptView({ offlineReady, needRefresh, onReload, onClose 
 }
 
 export function LegalDisclaimer({ onDismiss }) {
+  /** @type {import("react").RefObject<HTMLDivElement>} */
   const modalRef = useRef(null);
+  /** @type {import("react").RefObject<HTMLButtonElement>} */
   const ctaRef = useRef(null);
   // Trap focus within the mandatory gate; the CTA is the initial target. Don't
   // restore focus on unmount — the app moves focus to the first field on dismiss.
@@ -178,7 +180,12 @@ export function LegalDisclaimer({ onDismiss }) {
 }
 
 // Touch-friendly input: 52px min-height, 16px font-size, visible label
+/**
+ * @param {{ id: string, label: string, hint: string, rangeLabel: string, swatchVar: string,
+ *   value: string, onChange: (v: string) => void, nextId?: string, status?: string | null }} props
+ */
 export function NumberInput({ id, label, hint, rangeLabel, swatchVar, value, onChange, nextId, status }) {
+  /** @type {import("react").RefObject<HTMLInputElement>} */
   const inputRef = useRef(null);
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && nextId) document.getElementById(nextId)?.focus();
@@ -262,6 +269,7 @@ export function ResultCard({
   onClear,
 }) {
   const [copied, copy] = useCopy();
+  /** @type {import("react").RefObject<HTMLDivElement>} */
   const ref = useRef(null);
   useEffect(() => {
     if (!ref.current) return;
@@ -281,7 +289,7 @@ export function ResultCard({
   return (
     <div
       className="result"
-      style={{ "--sev-color": sevVar }}
+      style={/** @type {import("react").CSSProperties} */ ({ "--sev-color": sevVar })}
       ref={ref}
       role="status"
       aria-live="polite"
@@ -343,6 +351,10 @@ export function ResultCard({
   );
 }
 
+/**
+ * @param {{ visible: boolean, value: string, label: string, sevVar: string,
+ *   copyText: string, onCopy: () => void }} props
+ */
 export function StickyResult({ visible, value, label, sevVar, copyText, onCopy }) {
   const [copied, copy] = useCopy();
   if (!visible) return null;
