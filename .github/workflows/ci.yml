@@ -11,9 +11,18 @@ defaults:
   run:
     working-directory: files
 
+# No job here pushes commits, comments, or releases — read is the floor.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -51,6 +60,7 @@ jobs:
   # is heavy, so there's no need to matrix it across 20/22.
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -82,6 +92,7 @@ jobs:
   # ubuntu-latest ships google-chrome-stable, so no browser download is needed.
   lighthouse:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -114,6 +125,7 @@ jobs:
   # tooling) is surfaced non-blockingly for triage.
   security:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 

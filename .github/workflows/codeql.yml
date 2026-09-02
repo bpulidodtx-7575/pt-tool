@@ -9,10 +9,15 @@ on:
     # Weekly, so newly-published queries catch issues even without a push.
     - cron: "23 5 * * 1"
 
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: Analyze (javascript-typescript)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       security-events: write
       actions: read

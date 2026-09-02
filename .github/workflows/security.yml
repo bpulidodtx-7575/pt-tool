@@ -1,0 +1,50 @@
+name: Security
+
+# Secret scanning. `security`'s npm audit (in ci.yml) and CodeQL (codeql.yml)
+# already cover dependency vulnerabilities and static analysis — this is the
+# third leg: catching a committed credential before it's a leaked one.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    # Weekly, so a scan of the full history catches something a single PR
+    # diff wouldn't.
+    - cron: "31 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # gitleaks-action calls the GitHub API to list the PR's commits (so it can
+    # scan exactly what the PR adds, not the whole history unnecessarily) --
+    # the workflow-level contents:read alone gets a 403 "Resource not
+    # accessible by integration" on that call and the job never gets to
+    # scanning at all.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history: a secret that was committed and later removed is
+          # still a leaked secret.
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        # Free for repositories owned by a personal account. If this repo ever
+        # moves under an organization, this action requires a GITLEAKS_LICENSE.
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
