@@ -179,6 +179,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Fail if any required job did not succeed
+        # This job never checks out, so the workflow-level
+        # `defaults.run.working-directory: files` points at a directory that does
+        # not exist here and bash cannot start at all. Override it back to the
+        # workspace root.
+        working-directory: ${{ github.workspace }}
         run: |
           results="${{ join(needs.*.result, ' ') }}"
           echo "Upstream job results: $results"
