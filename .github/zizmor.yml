@@ -1,0 +1,14 @@
+# zizmor — static analysis for GitHub Actions. https://docs.zizmor.sh
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # Third-party actions must be hash-pinned: a mutable tag on someone
+        # else's repository is the supply-chain risk this audit exists for.
+        "*": hash-pin
+        # GitHub's own first-party actions are allowed a major-version tag.
+        # They are the same trust boundary as the runner itself, and pinning
+        # them to hashes means a Dependabot PR every time GitHub ships a patch,
+        # which in practice gets rubber-stamped — worse than the tag.
+        "actions/*": ref-pin
+        "github/*": ref-pin

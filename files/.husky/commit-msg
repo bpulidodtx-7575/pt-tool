@@ -1,0 +1,3 @@
+# Run from the repo root so "$1" (.git/COMMIT_EDITMSG) resolves, but use the
+# binary and config that live in files/.
+./files/node_modules/.bin/commitlint --config files/commitlint.config.js --edit "$1"

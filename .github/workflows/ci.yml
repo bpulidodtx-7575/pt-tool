@@ -30,6 +30,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -63,6 +65,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Use Node.js 20.x
         uses: actions/setup-node@v4
@@ -95,6 +99,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Use Node.js 20.x
         uses: actions/setup-node@v4
@@ -120,6 +126,70 @@ jobs:
           path: files/.lighthouseci/
           retention-days: 7
 
+  # AI-slop and dead-code gates. Split out from build-and-test so the check name
+  # says which gate failed, and so it runs once rather than per Node version.
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      # Only to publish the aislop findings to the Security tab (free on public
+      # repos). Nothing here writes to the repository itself.
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: npm
+          cache-dependency-path: files/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Dead code and unused dependencies
+        run: npm run deadcode
+
+      # Written before the gate runs so the findings still reach the Security tab
+      # on a failing score, which is exactly when they are worth reading.
+      - name: Generate aislop SARIF
+        if: ${{ always() }}
+        run: npx aislop ci --sarif > aislop.sarif || true
+
+      - name: Upload aislop SARIF
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: files/aislop.sarif
+          category: aislop
+
+      - name: AI-slop score gate
+        run: npm run slop:ci
+
+  # Single required check. Branch protection points at this one job, so adding a
+  # job above never means remembering to update a protection rule.
+  summary:
+    if: ${{ always() }}
+    needs: [build-and-test, e2e, lighthouse, security, quality]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail if any required job did not succeed
+        run: |
+          results="${{ join(needs.*.result, ' ') }}"
+          echo "Upstream job results: $results"
+          for r in $results; do
+            if [ "$r" != "success" ]; then
+              echo "::error::A required job did not succeed ($results)"
+              exit 1
+            fi
+          done
+          echo "All required jobs succeeded."
+
   # Dependency vulnerability gate. Only react/react-dom ship to users, so the
   # blocking gate is scoped to production deps; the full tree (build/test
   # tooling) is surfaced non-blockingly for triage.
@@ -128,6 +198,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Use Node.js 20.x
         uses: actions/setup-node@v4
