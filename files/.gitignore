@@ -42,3 +42,6 @@ yarn-debug.log*
 
 # Netlify
 .netlify/
+
+# aislop SARIF, written by CI for the Security tab
+aislop.sarif

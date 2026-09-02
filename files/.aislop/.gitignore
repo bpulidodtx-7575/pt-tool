@@ -1,0 +1,5 @@
+# Local-only side effects of running the CLI: score history, agent sessions and
+# worktrees. Only config.yml belongs in the repo.
+*
+!.gitignore
+!config.yml

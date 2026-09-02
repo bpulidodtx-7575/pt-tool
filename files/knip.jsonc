@@ -1,0 +1,16 @@
+{
+  // The Vite + Vitest plugins already infer main.jsx, the configs and *.test.*
+  // as entry points; only the Playwright specs need declaring.
+  "entry": ["e2e/*.spec.js"],
+  "project": ["*.js", "*.jsx", "e2e/*.js"],
+  "ignoreDependencies": [
+    // Pulled in transitively by vitest-axe, but declared directly so the axe
+    // engine version behind the a11y gate is controlled here rather than by
+    // whatever range vitest-axe happens to ship.
+    "axe-core",
+    // Invoked by .husky/commit-msg as ./files/node_modules/.bin/commitlint —
+    // the hook runs from the git root (one level up) so that git's "$1" path
+    // resolves, and knip cannot follow a shell path out of the package.
+    "@commitlint/cli",
+  ],
+}
