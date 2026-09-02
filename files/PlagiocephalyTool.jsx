@@ -29,7 +29,8 @@ export default function App() {
   const [crAp, setCrAp] = useState("");
   const [toast, setToast] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const toastT = useRef(null);
+  /** @type {import("react").MutableRefObject<ReturnType<typeof setTimeout> | undefined>} */
+  const toastT = useRef(undefined);
   const scrolled = useScrolled();
   const [, copyNote] = useCopy();
 
@@ -113,7 +114,7 @@ export default function App() {
         }
       }
     }
-    return { visible: false };
+    return { visible: false, value: "", label: "", sevVar: "", copyText: "" };
   }, [tab, cvaiA, cvaiB, crMl, crAp]);
 
   // Global bedside shortcuts (active once the disclaimer is acknowledged).

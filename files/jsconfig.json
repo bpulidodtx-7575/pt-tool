@@ -6,8 +6,18 @@
     "target": "es2020",
     "moduleResolution": "bundler",
     "strict": true,
+    // Ratchet: the rest of `strict` is on, but annotating every destructured
+    // prop in the .jsx tree is a separate piece of work. Turning this on adds
+    // ~80 findings that are all "add a JSDoc @param", none of which are bugs.
+    // Flip it to true once those annotations land; never widen `include`
+    // downward to make this file pass.
+    "noImplicitAny": false,
     "skipLibCheck": true,
-    "types": []
+    "jsx": "react-jsx",
+    // `vite-plugin-pwa/react` declares the build-only `virtual:pwa-register/react`
+    // module that PwaReloadPrompt.jsx imports.
+    "types": ["react", "react-dom", "vite-plugin-pwa/react"]
   },
-  "include": ["calc.js"]
+  "include": ["*.js", "*.jsx"],
+  "exclude": ["node_modules", "dist", "e2e", "*.test.js", "*.test.jsx"]
 }

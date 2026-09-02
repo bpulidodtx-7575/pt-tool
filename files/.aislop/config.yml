@@ -1,0 +1,34 @@
+# aislop — AI-slop quality gate. https://github.com/scanaislop/aislop
+#
+# Ratchet, not an aspiration. The score when this gate was introduced was 62;
+# removing five redundant exports took it to 64. failBelow sits at 62 so the
+# repo can never regress past where it started, with a small buffer because the
+# security engine reads live npm advisories — a newly published CVE can move the
+# score with no code change, and a red build for that reason teaches people to
+# ignore the gate. Raise this number as findings get fixed; never lower it.
+ci:
+  failBelow: 62
+
+exclude:
+  - "dist"
+  - "coverage"
+  - "public"
+
+rules:
+  # Left at their defaults deliberately, with the current counts recorded so the
+  # next person knows these were seen and triaged rather than missed:
+  #
+  #   jsx-a11y/*                  (15) real, and worth fixing — tracked follow-up.
+  #                                    Not bundled into this PR because reworking
+  #                                    markup risks the 135 tests and the
+  #                                    Lighthouse a11y >= 0.95 gate in one go.
+  #   code-quality/duplicate-block (7) real; needs judgement, not a mechanical fix.
+  #   security/vulnerable-dependency (15, dev-only, info) needs vite 5 -> 8 and
+  #                                    vitest 1 -> 4 majors. Separate PR.
+  #
+  # This one IS turned down, on purpose:
+  # every hit is a `// ─── Section ───` divider, which is this repo's deliberate
+  # and consistent file-structure convention, not a comment narrating the code
+  # beneath it. The rule's other half (comments restating the next line) is the
+  # half worth keeping, so it stays on as a warning rather than being switched off.
+  ai-slop/narrative-comment: warning

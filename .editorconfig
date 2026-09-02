@@ -1,0 +1,19 @@
+# Matches the Prettier settings in files/package.json so editors and the
+# formatter never disagree. https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+
+[*.md]
+# Trailing whitespace is a hard line break in Markdown.
+trim_trailing_whitespace = false
+
+[*.{yml,yaml}]
+indent_size = 2

@@ -1,9 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
+/**
+ * Clipboard write with a 2s "copied" flag.
+ * The tuple return type is explicit: without it the array widens to
+ * `(boolean | fn)[]` and every `copy(...)` call site fails to typecheck.
+ * @returns {[boolean, (text: string) => Promise<void>]}
+ */
 export function useCopy() {
   const [copied, setCopied] = useState(false);
-  const t = useRef(null);
+  /** @type {import("react").MutableRefObject<ReturnType<typeof setTimeout> | undefined>} */
+  const t = useRef(undefined);
   const copy = useCallback(async (text) => {
     try {
       if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
@@ -42,21 +49,34 @@ export function useScrolled(threshold = 8) {
 // Theme preference: "system" (default, follows OS), "light", or "dark".
 // Kept in sessionStorage so it survives refresh but clears with the tab —
 // consistent with the app's session-only, no-persistence privacy stance.
-export const THEME_MODES = ["system", "light", "dark"];
+/** @typedef {"system" | "light" | "dark"} ThemeMode */
+/** @type {ThemeMode[]} */
+const THEME_MODES = ["system", "light", "dark"];
 const THEME_KEY = "pt-theme";
 // Match the --bg token for light/dark so mobile browser chrome blends in.
+/** @type {Record<"light" | "dark", string>} */
 const THEME_COLOR = { light: "#f9fafb", dark: "#0f0f0f" };
 
+/**
+ * Session-scoped theme preference.
+ * @returns {[ThemeMode, () => void]}
+ */
 export function useTheme() {
-  const [mode, setMode] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem(THEME_KEY);
-      if (THEME_MODES.includes(saved)) return saved;
-    } catch (e) {
-      void e; // sessionStorage can throw in locked-down contexts — ignore.
-    }
-    return "system";
-  });
+  const [mode, setMode] = useState(
+    /** @returns {ThemeMode} */ () => {
+      try {
+        const saved = sessionStorage.getItem(THEME_KEY);
+        // The cast is the narrowing `Array.includes` can't express: `saved` is a
+        // ThemeMode exactly when it is a member of THEME_MODES.
+        if (saved !== null && THEME_MODES.includes(/** @type {ThemeMode} */ (saved))) {
+          return /** @type {ThemeMode} */ (saved);
+        }
+      } catch (e) {
+        void e; // sessionStorage can throw in locked-down contexts — ignore.
+      }
+      return "system";
+    },
+  );
 
   useEffect(() => {
     const root = document.documentElement;
@@ -92,12 +112,16 @@ export function useTheme() {
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * @param {import("react").RefObject<HTMLElement>} containerRef
+ * @param {{ initialFocusRef?: import("react").RefObject<HTMLElement>, restoreFocus?: boolean }} [options]
+ */
 export function useFocusTrap(containerRef, { initialFocusRef, restoreFocus = true } = {}) {
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return undefined;
-    const previouslyFocused = document.activeElement;
-    const focusables = () => Array.from(container.querySelectorAll(FOCUSABLE));
+    const previouslyFocused = /** @type {HTMLElement | null} */ (document.activeElement);
+    const focusables = () => /** @type {HTMLElement[]} */ (Array.from(container.querySelectorAll(FOCUSABLE)));
 
     (initialFocusRef?.current || focusables()[0] || container).focus();
 

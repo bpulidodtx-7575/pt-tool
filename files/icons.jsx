@@ -1,5 +1,5 @@
 // ─── Icons ────────────────────────────────────────────────────────────────────
-export const Ic = ({ size = 16, d, children, ...p }) => (
+const Ic = ({ size = 16, d, children, ...p }) => (
   <svg
     width={size}
     height={size}

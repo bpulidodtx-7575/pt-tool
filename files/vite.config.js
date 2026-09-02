@@ -57,14 +57,19 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
-      // Cover the app's logic + components; exclude entry/config and the
-      // largely-static icon/diagram markup that integration tests already render.
-      include: ["calc.js", "hooks.js", "components.jsx", "panels.jsx", "ErrorBoundary.jsx"],
+      // Cover the app's logic, components and the screen that orchestrates them.
+      // Still excluded: entry/config, icons.jsx, and Diagrams.jsx — the latter is
+      // largely-static SVG markup that integration tests render but do not assert
+      // (17% covered; including it would drag the floor down for no real signal).
+      include: ["calc.js", "hooks.js", "components.jsx", "panels.jsx", "ErrorBoundary.jsx", "PlagiocephalyTool.jsx"],
+      // Ratchet, not an aspiration: these sit just under the measured values
+      // (98.42 / 92.30 / 96.42 / 98.42) so coverage can only hold or improve.
+      // Raise them when it rises; never lower them to make a red build pass.
       thresholds: {
-        statements: 80,
-        branches: 80,
-        functions: 80,
-        lines: 80,
+        statements: 98,
+        branches: 92,
+        functions: 96,
+        lines: 98,
       },
     },
   },
