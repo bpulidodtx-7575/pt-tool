@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
