@@ -6,9 +6,9 @@ on:
   push:
     branches: ["main"]
   pull_request:
-  # Manual trigger — also useful to force a fresh run of the ci-workflows@main
-  # references below without a throwaway commit, while validating changes to
-  # that repo.
+  # Manual trigger — useful to force a fresh run without a throwaway commit,
+  # e.g. after ci-workflows tags a new version this repo hasn't repointed to
+  # yet.
   workflow_dispatch:
 
 defaults:
@@ -25,14 +25,15 @@ concurrency:
 
 jobs:
   # Delegates to ci-workflows' node-build-test.yml so a fix there reaches
-  # every consumer without touching this file again. This PR is what proves
-  # the extraction is faithful — same steps, same result, on a real runner.
+  # every consumer without touching this file again. Pinned to v1 — see
+  # https://github.com/bpulidodtx-7575/ci-workflows for what that covers and
+  # what package.json scripts it expects.
   build-and-test:
     strategy:
       fail-fast: false
       matrix:
         node-version: ["20.x", "22.x"]
-    uses: bpulidodtx-7575/ci-workflows/.github/workflows/node-build-test.yml@main
+    uses: bpulidodtx-7575/ci-workflows/.github/workflows/node-build-test.yml@v1
     with:
       working-directory: files
       cache-dependency-path: files/package-lock.json
@@ -120,7 +121,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: bpulidodtx-7575/ci-workflows/.github/workflows/node-deadcode-slop.yml@main
+    uses: bpulidodtx-7575/ci-workflows/.github/workflows/node-deadcode-slop.yml@v1
     with:
       working-directory: files
       cache-dependency-path: files/package-lock.json
