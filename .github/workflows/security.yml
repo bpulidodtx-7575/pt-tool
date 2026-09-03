@@ -13,6 +13,8 @@ on:
     # Weekly, so a scan of the full history catches something a single PR
     # diff wouldn't.
     - cron: "31 6 * * 1"
+  # Manual trigger — same rationale as ci.yml.
+  workflow_dispatch:
 
 # No job here pushes commits, comments, or releases — read is the floor. The
 # called workflow's secrets job needs pull-requests:read on top of that (see

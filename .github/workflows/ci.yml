@@ -6,6 +6,10 @@ on:
   push:
     branches: ["main"]
   pull_request:
+  # Manual trigger — also useful to force a fresh run of the ci-workflows@main
+  # references below without a throwaway commit, while validating changes to
+  # that repo.
+  workflow_dispatch:
 
 defaults:
   run:
