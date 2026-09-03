@@ -6,6 +6,10 @@ on:
   push:
     branches: ["main"]
   pull_request:
+  # Manual trigger — also useful to force a fresh run of the ci-workflows@main
+  # references below without a throwaway commit, while validating changes to
+  # that repo.
+  workflow_dispatch:
 
 defaults:
   run:
@@ -20,43 +24,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Delegates to ci-workflows' node-build-test.yml so a fix there reaches
+  # every consumer without touching this file again. This PR is what proves
+  # the extraction is faithful — same steps, same result, on a real runner.
   build-and-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         node-version: ["20.x", "22.x"]
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: files/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Test (with coverage thresholds)
-        run: npm run test:coverage
-
-      - name: Build
-        run: npm run build
+    uses: bpulidodtx-7575/ci-workflows/.github/workflows/node-build-test.yml@main
+    with:
+      working-directory: files
+      cache-dependency-path: files/package-lock.json
+      node-version: ${{ matrix.node-version }}
 
   # Real-browser end-to-end tests. Single Node version — installing the browser
   # is heavy, so there's no need to matrix it across 20/22.
@@ -128,47 +108,23 @@ jobs:
 
   # AI-slop and dead-code gates. Split out from build-and-test so the check name
   # says which gate failed, and so it runs once rather than per Node version.
+  # Same delegation as build-and-test, to ci-workflows' node-deadcode-slop.yml.
+  # upload-sarif: true because this repo is public, matching the aislop SARIF
+  # upload the inline job used to do.
   quality:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The called workflow's job asks for security-events:write (to upload the
+    # aislop SARIF), but a caller's workflow-level `permissions: contents:
+    # read` above is the ceiling on what a called reusable workflow's jobs can
+    # be granted — without this override the write request gets capped to
+    # read and the upload step fails.
     permissions:
       contents: read
-      # Only to publish the aislop findings to the Security tab (free on public
-      # repos). Nothing here writes to the repository itself.
       security-events: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.x"
-          cache: npm
-          cache-dependency-path: files/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Dead code and unused dependencies
-        run: npm run deadcode
-
-      # Written before the gate runs so the findings still reach the Security tab
-      # on a failing score, which is exactly when they are worth reading.
-      - name: Generate aislop SARIF
-        if: ${{ always() }}
-        run: npx aislop ci --sarif > aislop.sarif || true
-
-      - name: Upload aislop SARIF
-        if: ${{ always() }}
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: files/aislop.sarif
-          category: aislop
-
-      - name: AI-slop score gate
-        run: npm run slop:ci
+    uses: bpulidodtx-7575/ci-workflows/.github/workflows/node-deadcode-slop.yml@main
+    with:
+      working-directory: files
+      cache-dependency-path: files/package-lock.json
+      upload-sarif: true
 
   # Single required check. Branch protection points at this one job, so adding a
   # job above never means remembering to update a protection rule.

@@ -12,3 +12,8 @@ rules:
         # which in practice gets rubber-stamped — worse than the tag.
         "actions/*": ref-pin
         "github/*": ref-pin
+        # This account's own reusable workflows (e.g. ci-workflows). Same
+        # reasoning as actions/* and github/* above — hash-pinning here would
+        # mean every ci-workflows fix needs a SHA update in every consumer,
+        # which defeats the reason that repo exists.
+        "bpulidodtx-7575/*": ref-pin
