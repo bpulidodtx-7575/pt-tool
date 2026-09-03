@@ -1,8 +1,7 @@
 name: Security
 
-# Delegates to ci-workflows' security.yml (gitleaks + actionlint/zizmor). This
-# PR is the first real consumer, validating the extraction on @main before it
-# gets tagged v1.
+# Delegates to ci-workflows' security.yml (gitleaks + actionlint/zizmor).
+# Pinned to v1 — see https://github.com/bpulidodtx-7575/ci-workflows.
 
 on:
   pull_request:
@@ -36,4 +35,4 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: bpulidodtx-7575/ci-workflows/.github/workflows/security.yml@main
+    uses: bpulidodtx-7575/ci-workflows/.github/workflows/security.yml@v1
