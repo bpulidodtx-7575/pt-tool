@@ -1,8 +1,8 @@
 name: Security
 
-# Secret scanning. `security`'s npm audit (in ci.yml) and CodeQL (codeql.yml)
-# already cover dependency vulnerabilities and static analysis — this is the
-# third leg: catching a committed credential before it's a leaked one.
+# Delegates to ci-workflows' security.yml (gitleaks + actionlint/zizmor). This
+# PR is the first real consumer, validating the extraction on @main before it
+# gets tagged v1.
 
 on:
   pull_request:
@@ -14,6 +14,9 @@ on:
     # diff wouldn't.
     - cron: "31 6 * * 1"
 
+# No job here pushes commits, comments, or releases — read is the floor. The
+# called workflow's secrets job needs pull-requests:read on top of that (see
+# below); a bare top-level `contents: read` here would cap it back down.
 permissions:
   contents: read
 
@@ -22,69 +25,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Static analysis of the workflows themselves. Fifteen-odd workflow files were
-  # hand-written across these repos with nothing checking them; a typo'd
-  # expression or an over-scoped token only shows up when it matters.
-  workflows:
-    name: Workflow lint (actionlint + zizmor)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Install actionlint
-        env:
-          ACTIONLINT_VERSION: 1.7.7
-          ACTIONLINT_SHA256: 023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757
-        run: |
-          set -euo pipefail
-          curl -sSLo actionlint.tar.gz \
-            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
-          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum -c -
-          tar xzf actionlint.tar.gz actionlint
-
-      - name: Run actionlint
-        run: ./actionlint -color .github/workflows/*.yml
-
-      - name: Install zizmor
-        run: pipx install zizmor==1.30.0
-
-      # --offline keeps this job to the audits that were validated locally.
-      # The online audits (ref-confusion, impostor-commit) need API access and
-      # can surface findings this pin has never been checked against; turning
-      # them on is a deliberate follow-up, not a silent default.
-      - name: Run zizmor
-        run: zizmor --offline --no-progress --config .github/zizmor.yml .github/workflows/
-
-  secrets:
-    name: Secret scan (gitleaks)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # gitleaks-action calls the GitHub API to list the PR's commits (so it can
-    # scan exactly what the PR adds, not the whole history unnecessarily) --
-    # the workflow-level contents:read alone gets a 403 "Resource not
-    # accessible by integration" on that call and the job never gets to
-    # scanning at all.
+  security-checks:
+    # gitleaks-action calls the GitHub API to list the PR's commits — the
+    # called workflow's secrets job requests pull-requests:read for that, but
+    # a caller's workflow-level permissions is the ceiling on what a called
+    # reusable workflow's jobs can be granted, so it has to be re-granted here
+    # too or the request gets capped back to contents:read alone.
     permissions:
       contents: read
       pull-requests: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          # Full history: a secret that was committed and later removed is
-          # still a leaked secret.
-          fetch-depth: 0
-
-      - name: Run gitleaks
-        # Free for repositories owned by a personal account. If this repo ever
-        # moves under an organization, this action requires a GITLEAKS_LICENSE.
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    uses: bpulidodtx-7575/ci-workflows/.github/workflows/security.yml@main
