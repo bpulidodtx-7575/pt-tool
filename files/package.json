@@ -39,7 +39,7 @@
     "@types/react-dom": "^18.3.1",
     "@vite-pwa/assets-generator": "^1.0.2",
     "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "aislop": "^0.16.0",
     "axe-core": "^4.13.0",
     "eslint": "^8.56.0",
@@ -55,7 +55,7 @@
     "typescript": "^5.9.3",
     "vite": "^8.2.2",
     "vite-plugin-pwa": "^1.3.0",
-    "vitest": "^1.2.0",
+    "vitest": "^4.1.11",
     "vitest-axe": "^0.1.0"
   },
   "eslintConfig": {
