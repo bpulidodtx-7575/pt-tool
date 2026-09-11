@@ -7,9 +7,14 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
     groups:
-      # Batch routine dev-tooling bumps into one PR to cut noise.
+      # Batch routine minor/patch dev-tooling bumps into one PR to cut noise.
+      # Semver-major updates stay ungrouped so peer conflicts stay reviewable
+      # (see closed PR #37: eslint 10 vs eslint-plugin-react).
       dev-dependencies:
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
 
   # GitHub Actions used by the CI workflow.
   - package-ecosystem: "github-actions"
